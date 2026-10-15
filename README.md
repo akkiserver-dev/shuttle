@@ -4,6 +4,8 @@
 
 > **Disclaimer:** This project is an independent community effort and is not affiliated with, maintained, or endorsed by the original [Wasmtime project](https://github.com/bytecodealliance/wasmtime) or the Bytecode Alliance.
 
+> **AI Disclaimer:** Parts of this project were vibe-coded or written with the help of an AI assistant (Claude); the remaining parts were written by hand.
+
 Wasmtime-java-ng provides Java bindings for [Wasmtime](https://github.com/bytecodealliance/wasmtime), a fast, secure, and highly configurable WebAssembly runtime.
 
 This project allows Java applications to execute WebAssembly modules, interact with linear memory, and leverage the WebAssembly System Interface (WASI) through a native bridge built on Rust.
