@@ -202,16 +202,16 @@ public final class WitCodeGenerator {
             imports.add("import java.util.Map;");
         }
         if (kinds.contains(WitTypeKind.VARIANT)) {
-            imports.add("import component.jp.akkiserver.shuttle.WitVariant;");
+            imports.add("import jp.akkiserver.shuttle.component.WitVariant;");
         }
         if (kinds.contains(WitTypeKind.ENUM)) {
-            imports.add("import component.jp.akkiserver.shuttle.WitEnum;");
+            imports.add("import jp.akkiserver.shuttle.component.WitEnum;");
         }
         if (kinds.contains(WitTypeKind.RESULT)) {
-            imports.add("import component.jp.akkiserver.shuttle.WitResult;");
+            imports.add("import jp.akkiserver.shuttle.component.WitResult;");
         }
         if (kinds.contains(WitTypeKind.RESOURCE)) {
-            imports.add("import component.jp.akkiserver.shuttle.WitResource;");
+            imports.add("import jp.akkiserver.shuttle.component.WitResource;");
         }
         return imports;
     }
