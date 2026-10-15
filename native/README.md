@@ -28,12 +28,34 @@ update:
 
 ## Build and run
 
+Scripts (they build the guests, build the workspace and run `verify`):
+
 ```sh
-sh guests/build.sh                      # run inside native/; needs clang + wasm-ld (no wasi-sdk needed)
+./native/scripts/build.sh                    # Linux / WSL2: dev build + verify
+./native/scripts/build.sh --release          # release build + verify
+./native/scripts/build.sh --cross aarch64    # Linux arm64 via `cross` (build only)
+```
+```powershell
+.\native\scripts\build.ps1                    # Windows: dev build + verify
+.\native\scripts\build.ps1 -Release
+```
+
+Requirements: Rust (rustup); clang + wasm-ld (`sudo apt install clang lld`
+on Linux/WSL2, the LLVM installer on Windows); `cross` + Docker only for
+`--cross`.
+
+By hand, inside `native/`:
+
+```sh
+sh guests/build.sh
 cargo build
 ./target/debug/shuttle-runner run    guests/out/bios.wasm guests/out/os.wasm guests/out/child.wasm
 ./target/debug/shuttle-runner verify guests/out/bios.wasm guests/out/os.wasm guests/out/child.wasm
 ```
+
+CI (`.github/workflows/native.yml`) builds the guests once on Linux, then
+builds and runs `verify` on Linux, Windows and macOS, each on x86_64 and
+arm64.
 
 `run` boots and prints the log until power-off. `verify` runs once without
 interruption, then once per tick boundary with capture → restore into a
