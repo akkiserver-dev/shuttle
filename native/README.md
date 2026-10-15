@@ -1,6 +1,6 @@
 # Shuttle (prototype)
 
-Native core of the Shuttle computer mod: runs Wasm guests (BIOS → OS kernel →
+Native core of Shuttle, the Wasm runtime library for computer mods: runs Wasm guests (BIOS → OS kernel →
 child programs) on Wasmtime 46, makes them checkpointable with Weave, and
 implements the firmware ABI draft 0.1 (`fw.*`, `co.*`, `sys.call`).
 Nothing here depends on Minecraft or Java yet.
@@ -109,6 +109,6 @@ queued `dev_submit` requests are saved in snapshots and run after restore.
 
 ## Next steps
 
-- JNI layer in wasmtime-ng exposing `ShuttleEngine` / `Machine` (`tick`,
+- JNI layer in shuttle-java exposing `ShuttleEngine` / `Machine` (`tick`,
   `capture`, `restore`, `Device.invoke` callback).
 - Measure with a real OS-sized module (transform/compile time, disk cache).

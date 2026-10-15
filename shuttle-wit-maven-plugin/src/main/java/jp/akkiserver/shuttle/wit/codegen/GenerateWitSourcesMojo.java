@@ -20,9 +20,9 @@ import jp.akkiserver.shuttle.wit.parser.WitInterface;
 import jp.akkiserver.shuttle.wit.parser.WitParser;
 
 /**
- * Generates one abstract {@code WasmComponentContext} implementation per WIT
- * interface, so callers only need to extend the generated class and
- * implement its (typed) abstract methods -- see {@link WitCodeGenerator} for
+ * Generates one {@code WasmComponentContext} sub-interface per WIT
+ * interface, so callers only need to implement the generated interface and
+ * its (typed) abstract methods -- see {@link WitCodeGenerator} for
  * the generated shape. Two independent, optional sources of interfaces to
  * generate from, either or both of which may be configured:
  * <ul>

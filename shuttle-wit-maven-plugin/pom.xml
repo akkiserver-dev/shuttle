@@ -14,7 +14,7 @@
     <packaging>maven-plugin</packaging>
 
     <name>shuttle-wit-maven-plugin</name>
-    <description>Maven plugin generating abstract WasmComponentContext implementations from WIT interfaces, so custom component contexts only need to implement typed abstract methods instead of hand-writing the interface/version/getImportFunctions plumbing.</description>
+    <description>Maven plugin generating WasmComponentContext sub-interfaces from WIT interfaces, so custom component contexts only need to implement typed methods instead of hand-writing the interface/version/getImportFunctions plumbing.</description>
     <url>https://github.com/akkiserver-dev/shuttle</url>
 
     <properties>

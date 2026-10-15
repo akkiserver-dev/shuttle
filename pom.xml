@@ -9,7 +9,7 @@
     <packaging>pom</packaging>
 
     <name>shuttle</name>
-    <description>Shuttle: a Minecraft computer mod that runs WebAssembly. Java bindings for Wasmtime/Weave via a native Rust bridge, plus WIT tooling.</description>
+    <description>Shuttle: a WebAssembly runtime library for Minecraft computer mods. Java bindings for Wasmtime/Weave via a native Rust bridge, plus WIT tooling.</description>
     <url>https://github.com/akkiserver-dev/shuttle</url>
 
     <licenses>

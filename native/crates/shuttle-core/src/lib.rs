@@ -1,4 +1,4 @@
-//! shuttle-core: the native engine behind the Shuttle computer mod.
+//! shuttle-core: the native engine of the Shuttle runtime library.
 //!
 //! It runs Wasm guests (BIOS, OS kernel, child programs) on Wasmtime, makes
 //! them checkpointable with Weave, and implements the firmware ABI draft 0.1
