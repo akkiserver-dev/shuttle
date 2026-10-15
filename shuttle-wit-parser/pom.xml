@@ -50,11 +50,10 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.2.0</version>
                 <executions>
-                    <!-- Unlike wasmtime-binding (which ships to every consumer's runtime and
-                    needs cross-compiled binaries for the full release platform matrix), this
-                    binding only ever runs on the build machine during `generate-sources` of the
-                    shuttle-wit-maven-plugin, so a plain host-target `cargo build` is enough,
-                    no `cross`/Docker required. -->
+                    <!-- This binding only runs on the build machine (during `generate-sources`
+                    of shuttle-wit-maven-plugin), so it is built for the host platform only.
+                    The target and library folder come from the host-* profile the root pom
+                    activates for the current OS and CPU. -->
                     <execution>
                         <id>build wit-parser-binding</id>
                         <goals>
@@ -69,6 +68,8 @@
                                 <argument>build</argument>
                                 <argument>--profile</argument>
                                 <argument>${cargo.profile}</argument>
+                                <argument>--target</argument>
+                                <argument>${native.rust.target}</argument>
                                 <argument>--target-dir</argument>
                                 <argument>${project.build.directory}/rust</argument>
                             </arguments>
@@ -84,26 +85,24 @@
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.3.1</version>
                 <executions>
-                    <!-- Copy the library built above to the libs folder within the classes, in a
-                    folder matching the JNA convention jar-jni uses to find the suitable library
-                    for a target. Only linux-x86-64 (the build machine's own platform) is covered
-                    for now, see the module description. -->
+                    <!-- Copy the library built above into the folder jar-jni looks in for the
+                    running platform (JNA naming, e.g. libs/linux-x86-64/). -->
                     <execution>
-                        <id>copy-lib-linux-x86-64</id>
+                        <id>copy wit-parser-binding</id>
                         <phase>compile</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
                             <outputDirectory>
-                                ${project.build.directory}/classes/jp/akkiserver/shuttle/wit/parser/libs/linux-x86-64</outputDirectory>
+                                ${project.build.directory}/classes/jp/akkiserver/shuttle/wit/parser/libs/${native.libdir}</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>
-                                        ${project.build.directory}/rust/${cargo.profile.folder}</directory>
+                                        ${project.build.directory}/rust/${native.rust.target}/${cargo.profile.folder}</directory>
                                     <filtering>false</filtering>
                                     <includes>
-                                        <include>*.so</include>
+                                        <include>*.${native.lib.ext}</include>
                                     </includes>
                                 </resource>
                             </resources>

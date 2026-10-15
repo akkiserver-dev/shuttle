@@ -44,9 +44,11 @@ class WitParserTest {
 
     @Test
     void throwsOnUnknownFile() {
+        // Compare with the platform's own spelling of the path (backslashes on Windows).
+        Path missing = Path.of("/no/such/file.wit");
         assertTrue(org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class,
-                () -> WitParser.parse(Path.of("/no/such/file.wit"))).getMessage()
-                .contains("no/such/file.wit"));
+                () -> WitParser.parse(missing)).getMessage()
+                .contains(missing.toString()));
     }
 
     /**
