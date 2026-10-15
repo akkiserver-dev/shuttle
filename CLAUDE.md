@@ -31,15 +31,17 @@
 
 # Project
 
-Shuttle is a WebAssembly runtime library (Java binding + native Rust:
-Wasmtime + Weave) for Minecraft computer mods. It is not a mod itself.
-OpenComputers will use it through an addon; a new Retro Computing mod
-will include it by default. Current status and open decisions:
+Shuttle is only a persistable Wasm runtime: Wasmtime integrated with Weave,
+plus its Java binding, like JNLua is for Lua in OpenComputers. It is not a
+mod. OpenComputers will use it through an addon; a new Retro Computing mod
+(RC) will include it by default. Anything at the level of "a computer"
+(firmware ABI, devices, ticks, power, BIOS/OS boot, machine save format)
+belongs to those mods, not to Shuttle. Current status and open decisions:
 `native/HANDOFF.md`. Overview and docs: `README.md`, `docs/`.
 
 | Path | What |
 | --- | --- |
-| `native/` | Rust workspace: `shuttle-core`, `shuttle-runner`, C test guests |
+| `native/` | Computer prototype (`shuttle-core`, `shuttle-runner`, C guests); belongs to RC, will move there |
 | `shuttle-java/` | `jp.akkiserver.shuttle`: Wasmtime + Weave JNI binding |
 | `shuttle-java-example/` | Weave example |
 | `shuttle-wit-parser/`, `shuttle-wit-maven-plugin/` | WIT tooling |

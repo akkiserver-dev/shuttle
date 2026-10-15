@@ -281,7 +281,9 @@ Rules that follow from the API:
 
 ### Relation to `native/`
 
-The Weave layer in `shuttle-java` and the native core in `native/` are separate. `shuttle-java` pins Weave commit `0f26893`, which does not have the `shuttle-host-hooks` additions (yielding imports, memory limits). `native/` pins `677cce6` on branch `shuttle-host-hooks`. How the Java layer will connect to `shuttle-core` (a Machine API over JNI) has not been designed yet.
+`native/` is a prototype of a whole computer (firmware ABI, devices, BIOS → OS → child programs) built directly on Weave in Rust. That level belongs to the host mod, so `native/` will move to the Retro Computing mod and is not connected to `shuttle-java`.
+
+`shuttle-java` pins Weave commit `0f26893`, which does not have the `shuttle-host-hooks` additions (yielding imports, memory limits) that `native/` uses (`677cce6`). Bringing those, plus the primitives for nested instances, into this binding is designed in [design/runtime-extensions.md](design/runtime-extensions.md).
 
 ## Architecture
 
