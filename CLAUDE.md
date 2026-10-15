@@ -19,3 +19,7 @@
 ## Role
 - The user owns the project and makes the decisions. Claude is an
   assistant that helps; it does not take over.
+
+## Branches
+- New features: `feature/<name>`
+- Fixes: `fix/<name>`
