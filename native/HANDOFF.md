@@ -60,14 +60,19 @@ Remote branches `feature/native-build` and `feature/shuttle-core` are merged/obs
   rustc 1.99.0, `cargo build` 2m13s; verify 26/26 identical, control 24/24
   diverged. Re-run after the rebase: same result.
   - Snapshots on Windows are 5.6 KB (tick 1) and about 9.3 KB later; the
-    Linux numbers in `native/README.md` are 5.2-7.7 KB. Not investigated.
+    Linux numbers are 5.2-7.7 KB (confirmed on WSL2 below).
   - `build.ps1` dies if its output is redirected (`*>&1`) under Windows
     PowerShell 5.1: cargo's stderr becomes an error record and
     `$ErrorActionPreference='Stop'` aborts. A plain run works. Not fixed.
-- **WSL2 native build not run yet.** Ubuntu-26.04 has only git; it needs
-  `sudo apt install clang lld build-essential` and rustup (owner runs sudo).
-  Decided: build directly in `/mnt/d/Projects/shuttle` (`.gitattributes`
-  keeps `*.sh` LF, so the scripts run under WSL).
+- **WSL2 native build verified** (Ubuntu-26.04, run directly in
+  `/mnt/d/Projects/shuttle/native`, `.gitattributes` keeps `*.sh` LF):
+  `cargo build` 2m33s, verify 26/26 identical, control 24/24 diverged.
+  Snapshots 5.3 KB (tick 1) and about 7.6 KB later, matching the Linux numbers
+  in `native/README.md`; so the larger Windows snapshots (about 9.3 KB) are an
+  OS difference, cause not investigated.
+- **WSL2 Maven not run yet**: needs `sudo apt install openjdk-21-jdk maven`
+  and `rustup target add wasm32-unknown-unknown`. The owner's bar for "done"
+  is build + tests passing on the Windows host and on WSL2.
 - **Maven on Windows** (IntelliJ's bundled Maven, JDK 25, no `-P`; the
   `host-windows-x86-64` profile activates itself), `RUSTFLAGS=-D warnings`:
   all five modules pass: `shuttle-java` 64/64, `shuttle-wit-parser` 4/4,
