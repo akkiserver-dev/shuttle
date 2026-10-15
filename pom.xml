@@ -3,14 +3,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>io.github.stefanrichterhuber</groupId>
-    <artifactId>wasmtimejavang-parent</artifactId>
+    <groupId>jp.akkiserver</groupId>
+    <artifactId>shuttle</artifactId>
     <version>6.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>wasmtime-java-ng (parent)</name>
-    <description>Java bindings for Wasmtime via a native Rust bridge, and the WIT-driven code generation tooling around it.</description>
-    <url>https://github.com/StefanRichterHuber/wasmtime-java-ng</url>
+    <name>shuttle</name>
+    <description>Shuttle: a WebAssembly runtime library for Minecraft computer mods. Java bindings for Wasmtime/Weave via a native Rust bridge, plus WIT tooling.</description>
+    <url>https://github.com/akkiserver-dev/shuttle</url>
 
     <licenses>
         <license>
@@ -21,18 +21,29 @@
 
     <developers>
         <developer>
+            <name>akki</name>
+            <organization>akkiserver-dev</organization>
+            <organizationUrl>https://github.com/akkiserver-dev</organizationUrl>
+            <roles>
+                <role>maintainer</role>
+            </roles>
+        </developer>
+        <developer>
             <name>Stefan Richter-Huber</name>
             <email>stefan@richter-huber.de</email>
             <organization>Stefan Richter-Huber</organization>
             <organizationUrl>https://github.com/StefanRichterHuber</organizationUrl>
+            <roles>
+                <role>original author (wasmtime-java-ng)</role>
+            </roles>
         </developer>
     </developers>
 
     <modules>
-        <module>wasmtimejavang</module>
-        <module>wasmtimejavang-example</module>
-        <module>wit-parser</module>
-        <module>wit-codegen-maven-plugin</module>
+        <module>shuttle-java</module>
+        <module>shuttle-java-example</module>
+        <module>shuttle-wit-parser</module>
+        <module>shuttle-wit-maven-plugin</module>
     </modules>
 
     <properties>
@@ -53,9 +64,9 @@
 
 
     <scm>
-        <connection>scm:git:https://github.com/StefanRichterHuber/wasmtime-ng</connection>
-        <developerConnection>scm:git:https://github.com/StefanRichterHuber/wasmtime-ng</developerConnection>
-        <url>https://github.com/StefanRichterHuber/wasmtime-ng</url>
+        <connection>scm:git:https://github.com/akkiserver-dev/shuttle</connection>
+        <developerConnection>scm:git:https://github.com/akkiserver-dev/shuttle</developerConnection>
+        <url>https://github.com/akkiserver-dev/shuttle</url>
         <tag>v4.0.1</tag>
     </scm>
 

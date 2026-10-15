@@ -1,0 +1,59 @@
+# Builds the Shuttle native workspace (native/) on all six target platforms
+# and runs the capture/restore verification on each.
+name: Native (Shuttle)
+
+on:
+  push:
+    branches: [main]
+    paths: ["native/**", ".github/workflows/native.yml"]
+  pull_request:
+    paths: ["native/**", ".github/workflows/native.yml"]
+  workflow_dispatch:
+
+jobs:
+  # The C guests are plain wasm32 and identical everywhere: build them once.
+  guests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install clang and lld
+        run: sudo apt-get update && sudo apt-get install -y clang lld
+      - name: Build guests
+        run: sh native/guests/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: guests
+          path: native/guests/out/*.wasm
+
+  build:
+    needs: guests
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64, os: ubuntu-latest }
+          - { name: linux-aarch64, os: ubuntu-24.04-arm }
+          - { name: windows-x86_64, os: windows-latest }
+          - { name: windows-aarch64, os: windows-11-arm }
+          - { name: macos-x86_64, os: macos-15-intel }
+          - { name: macos-aarch64, os: macos-latest }
+    name: build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+        working-directory: native
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache-workspaces: native
+          rustflags: ""
+      - uses: actions/download-artifact@v4
+        with:
+          name: guests
+          path: native/guests/out
+      - name: Build
+        run: cargo build --locked --release
+      - name: Verify capture/restore
+        run: ./target/release/shuttle-runner verify guests/out/bios.wasm guests/out/os.wasm guests/out/child.wasm
