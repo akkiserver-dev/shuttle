@@ -70,9 +70,15 @@ Remote branches `feature/native-build` and `feature/shuttle-core` are merged/obs
   Snapshots 5.3 KB (tick 1) and about 7.6 KB later, matching the Linux numbers
   in `native/README.md`; so the larger Windows snapshots (about 9.3 KB) are an
   OS difference, cause not investigated.
-- **WSL2 Maven not run yet**: needs `sudo apt install openjdk-21-jdk maven`
-  and `rustup target add wasm32-unknown-unknown`. The owner's bar for "done"
-  is build + tests passing on the Windows host and on WSL2.
+- **WSL2 Maven verified**: `mvn test` in `/mnt/d/Projects/shuttle` (no `-P`;
+  `host-linux-x86-64` activates itself) passes for all five modules
+  (4m07s). Needs `openjdk-21-jdk`, `maven` and the `wasm32-unknown-unknown`
+  Rust target. The owner's bar for "done" (build + tests on the Windows host
+  and on WSL2) is met.
+- **CI (`ci.yml`, PR #3)**: all 13 jobs pass. One earlier `java
+  (macos-aarch64)` failure was transient: Maven could not download
+  `maven-filtering:3.4.0` from Central; a re-run passed. Further CI work is
+  on hold by the owner's decision.
 - **Maven on Windows** (IntelliJ's bundled Maven, JDK 25, no `-P`; the
   `host-windows-x86-64` profile activates itself), `RUSTFLAGS=-D warnings`:
   all five modules pass: `shuttle-java` 64/64, `shuttle-wit-parser` 4/4,
@@ -167,11 +173,12 @@ Remote branches `feature/native-build` and `feature/shuttle-core` are merged/obs
 
 The owner picks the order. Candidates:
 
-1. Finish `feature/unified-ci` (CI green on all six platforms, PR, merge).
-2. WSL2 native build (after the owner installs the tools).
-3. Decide how the Weave JNI layer (`shuttle-java`, Weave `0f26893`) and
+1. Decide how the Weave JNI layer (`shuttle-java`, Weave `0f26893`) and
    `native/shuttle-core` (`677cce6`) relate, then design the Machine API JNI
    layer. Review section 5 as part of it.
-4. All-platform jar / distribution (Maven Central, GitHub Releases, bundled
-   in the RC mod, ...).
-5. Smaller known issues from section 6.
+2. All-platform jar / distribution (Maven Central, GitHub Releases, bundled
+   in the RC mod, ...). CI work is on hold until the owner asks.
+3. Smaller known issues from section 6.
+
+Done on 2026-10-15: Windows and WSL2 builds + tests, rename to Shuttle,
+docs, Java CI fix (PR #2), unified build-only CI and host profiles (PR #3).
