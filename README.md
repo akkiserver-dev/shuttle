@@ -49,11 +49,11 @@ The Java Wasmtime bindings in this repository are a fork of [StefanRichterHuber/
 
 > **Disclaimer:** This project is an independent community effort and is not affiliated with, maintained, or endorsed by the [Wasmtime project](https://github.com/bytecodealliance/wasmtime), the Bytecode Alliance, Mojang or Microsoft.
 
+> **AI Disclaimer:** Parts of this project were vibe-coded or written with the help of an AI assistant (Claude); the remaining parts were written by hand.
+
 ## Wasmtime Java binding (wasmtimejavang)
 
 The rest of this document comes from the upstream project and describes the Java bindings.
-
-> **AI Disclaimer:** Parts of this project were vibe-coded or written with the help of an AI assistant (Claude); the remaining parts were written by hand.
 
 Wasmtime-java-ng provides Java bindings for [Wasmtime](https://github.com/bytecodealliance/wasmtime), a fast, secure, and highly configurable WebAssembly runtime.
 
