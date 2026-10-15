@@ -1,3 +1,7 @@
+// jni 0.22.4's `bind_java_type!` expands to `AtomicBool::fetch_update`, deprecated
+// since Rust 1.99. Remove once jni ships a fix (jni-rs/jni-rs#846).
+#![allow(deprecated)]
+
 pub mod java_numbers;
 pub mod java_collections;
 pub mod java_maps;
