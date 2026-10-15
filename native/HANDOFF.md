@@ -32,6 +32,24 @@ run **WebAssembly** programs. Everything the player runs is Wasm: a BIOS
 
 `native/README.md` explains the prototype, how to build it, and the results.
 
+### Renamed on 2026-10-15 (commit `983dc25`)
+
+The text below keeps the old names as they were when it was written. Map them as follows:
+
+| Old | New |
+| --- | --- |
+| `wasmtimejavang/` (artifact `wasmtimejavang`) | `shuttle-java/` |
+| `wasmtimejavang-example/` | `shuttle-java-example/` |
+| `wit-parser/` | `shuttle-wit-parser/` |
+| `wit-codegen-maven-plugin/` | `shuttle-wit-maven-plugin/` |
+| groupId `io.github.stefanrichterhuber`, parent `wasmtimejavang-parent` | groupId `jp.akkiserver`, parent `shuttle` |
+| package `io.github.stefanrichterhuber.wasmtimejavang` | `jp.akkiserver.shuttle` |
+| package `io.github.stefanrichterhuber.witparser` / `.witcodegen` | `jp.akkiserver.shuttle.wit.parser` / `.wit.codegen` |
+
+`native/` keeps its name. The feature branches were also rebased onto
+`main` (on top of `d400a75`), so section 3's note about them being based
+on `917ffd6` is out of date.
+
 ## 3. Current state
 
 - `native/` boots BIOS -> `exec` -> OS -> `co_create` -> child -> exit, in a
