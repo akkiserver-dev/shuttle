@@ -50,4 +50,6 @@ jobs:
           distribution: temurin
           cache: maven
       - name: Build with Maven
+        # bash, not PowerShell: PowerShell splits -Dcargo.profile=release at the dot
+        shell: bash
         run: mvn -P build-host-windows-x86_64 -pl shuttle-java,shuttle-java-example -am -Dcargo.profile=release -Dcargo.profile.folder=release -B package --file pom.xml
