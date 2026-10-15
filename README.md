@@ -1,4 +1,4 @@
-[![Native (Shuttle)](https://github.com/akkiserver-dev/shuttle/actions/workflows/native.yml/badge.svg)](https://github.com/akkiserver-dev/shuttle/actions/workflows/native.yml)
+[![CI](https://github.com/akkiserver-dev/shuttle/actions/workflows/ci.yml/badge.svg)](https://github.com/akkiserver-dev/shuttle/actions/workflows/ci.yml)
 
 # Shuttle
 
@@ -49,14 +49,14 @@ Native core (requires Rust, plus clang and wasm-ld for the C guests):
 
 `verify` boots BIOS → OS → child, then repeats the run with capture → restore into a fresh machine at every tick boundary and checks that the logs are identical.
 
-Java bindings on Windows (requires JDK 21, Maven and Rust; no Docker):
+Java bindings (requires JDK 21, Maven and Rust; Maven picks the native build for your OS and CPU automatically):
 
-```powershell
-mvn -P build-host-windows-x86_64 -pl shuttle-java,shuttle-java-example -am install
+```sh
+mvn -pl shuttle-java,shuttle-java-example -am install
 mvn -pl shuttle-java-example exec:java
 ```
 
-The second command runs the Weave example. Linux builds, the other Maven profiles, CI and known problems are covered in [docs/building.md](docs/building.md).
+The second command runs the Weave example. Platform profiles, CI and known problems are covered in [docs/building.md](docs/building.md).
 
 ## Documentation
 

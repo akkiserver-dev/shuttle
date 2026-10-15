@@ -33,8 +33,8 @@ child programs.
 | What | Where |
 | --- | --- |
 | This repo | `akkiserver-dev/shuttle` (forked from StefanRichterHuber/wasmtime-ng) |
-| Working branch | `feature/native-build`, rebased onto `main` (on top of `d400a75`) |
-| Draft PR (CI check only, not for merging yet) | `akkiserver-dev/shuttle` PR #1 |
+| Working branch | `feature/unified-ci` (from `main` after PR #2 was merged as `7109d4f`) |
+| PRs | #1 closed (CI check only); #2 merged (native core, rename, docs, CI fixes) |
 | Weave fork | `akkiserver-dev/weave`, branch `shuttle-host-hooks` (commit `677cce6`) |
 | Firmware ABI spec (Japanese) | https://claude.ai/code/artifact/05272d17-ac4c-4f56-933a-374281672f79 |
 | Docs | `README.md` (overview), `docs/` (building, java-binding, wit-codegen), `native/README.md` |
@@ -52,7 +52,7 @@ Modules (Maven groupId `jp.akkiserver`, parent artifactId `shuttle`):
 Old names (before commit `983dc25`): `wasmtimejavang`, `wasmtimejavang-example`,
 `wit-parser`, `wit-codegen-maven-plugin`, groupId `io.github.stefanrichterhuber`,
 packages `io.github.stefanrichterhuber.{wasmtimejavang,witparser,witcodegen}`.
-`feature/shuttle-core` on the remote is an older subset of `feature/native-build`.
+Remote branches `feature/native-build` and `feature/shuttle-core` are merged/obsolete (not deleted yet).
 
 ## 3. Current state (2026-10-15)
 
@@ -60,21 +60,29 @@ packages `io.github.stefanrichterhuber.{wasmtimejavang,witparser,witcodegen}`.
   rustc 1.99.0, `cargo build` 2m13s; verify 26/26 identical, control 24/24
   diverged. Re-run after the rebase: same result.
   - Snapshots on Windows are 5.6 KB (tick 1) and about 9.3 KB later; the
-    Linux numbers in `native/README.md` are 5.2-7.7 KB. Not investigated.
+    Linux numbers are 5.2-7.7 KB (confirmed on WSL2 below).
   - `build.ps1` dies if its output is redirected (`*>&1`) under Windows
     PowerShell 5.1: cargo's stderr becomes an error record and
     `$ErrorActionPreference='Stop'` aborts. A plain run works. Not fixed.
-- **WSL2 native build not run yet.** Ubuntu-26.04 has only git; it needs
-  `sudo apt install clang lld build-essential` and rustup (owner runs sudo).
-  Plan: clone the repo into the WSL home and build there, so Linux and
-  Windows artifacts do not share `native/target/`.
-- **Maven on Windows** (IntelliJ's bundled Maven, JDK 25,
-  `-P build-host-windows-x86_64`): `shuttle-java` 64/64 tests pass (incl.
-  WeaveTest 12). `shuttle-wit-parser` fails on Windows because its pom only
-  copies the Linux native library; `shuttle-wit-maven-plugin` was therefore
-  not tested locally.
-- Rename to Shuttle, docs rewrite and a code-generator import fix are
-  committed. Pushed up to `7dbc5b8`; later commits are local only.
+- **WSL2 native build verified** (Ubuntu-26.04, run directly in
+  `/mnt/d/Projects/shuttle/native`, `.gitattributes` keeps `*.sh` LF):
+  `cargo build` 2m33s, verify 26/26 identical, control 24/24 diverged.
+  Snapshots 5.3 KB (tick 1) and about 7.6 KB later, matching the Linux numbers
+  in `native/README.md`; so the larger Windows snapshots (about 9.3 KB) are an
+  OS difference, cause not investigated.
+- **WSL2 Maven not run yet**: needs `sudo apt install openjdk-21-jdk maven`
+  and `rustup target add wasm32-unknown-unknown`. The owner's bar for "done"
+  is build + tests passing on the Windows host and on WSL2.
+- **Maven on Windows** (IntelliJ's bundled Maven, JDK 25, no `-P`; the
+  `host-windows-x86-64` profile activates itself), `RUSTFLAGS=-D warnings`:
+  all five modules pass: `shuttle-java` 64/64, `shuttle-wit-parser` 4/4,
+  `shuttle-wit-maven-plugin` 3/3.
+- PR #2 (rename, docs, Java CI fixes) is merged; Java CI was green on Linux
+  and Windows before the merge.
+- On `feature/unified-ci`: `native.yml` + `maven.yml` replaced by one
+  `ci.yml` (build only, six platforms); the cross-based Maven profiles
+  replaced by six OS-activated `host-*` profiles in the root pom, also used by
+  `shuttle-wit-parser`.
 - **Two Weave versions coexist**: `shuttle-java` pins `0f26893` (no
   `shuttle-host-hooks`), `native/` pins `677cce6`. How the `d400a75` Weave
   JNI layer and `native/shuttle-core` fit together is **not decided**.
@@ -109,6 +117,18 @@ packages `io.github.stefanrichterhuber.{wasmtimejavang,witparser,witcodegen}`.
   WASI material was dropped because WASI was removed upstream (`44c4363`).
 - pom `<developers>`: akki (maintainer) + Stefan Richter-Huber (original
   author).
+- CI (2026-10-15): one workflow `ci.yml` with separate jobs (`guests`,
+  `native` x6, `java` x6) on GitHub-hosted runners for all six platforms.
+  **CI only builds**: no tests and no `shuttle-runner verify`. Tests run on
+  the owner's Windows machine; if CI breaks on another platform, fix it
+  separately. Triggers: push to `main`, every PR, manual dispatch. No
+  per-path job filtering. Rust warnings are errors (`-D warnings`) in both.
+- jni deprecation (jni-rs/jni-rs#846): `#![allow(deprecated)]` in the two
+  JNI crates' `lib.rs` until jni ships a fix.
+- Maven native build: six `host-*` profiles in the root pom, activated from
+  `os.name`/`os.arch`, built with plain `cargo` (no cross, no Docker). Each
+  jar holds the host platform's library only; an all-platform jar is a later
+  task (distribution format not decided).
 
 ## 5. NOT approved yet (decided by Claude without asking; review each)
 
@@ -129,13 +149,8 @@ packages `io.github.stefanrichterhuber.{wasmtimejavang,witparser,witcodegen}`.
 
 ## 6. Known issues (found 2026-10-15, not fixed)
 
-- **`.github/workflows/maven.yml`** (probably why "Java CI with Maven"
-  fails): installs `wasm32-wasip1`/`wasip2`/nightly `wasip1-threads`
-  (leftovers from removed WASI modules) but not `wasm32-unknown-unknown`,
-  which the `valuetest` fixture needs; cross-compiles
-  `x86_64-pc-windows-msvc` with `cross`, which has no official msvc image.
-- `shuttle-wit-parser` has no Windows/macOS native library copy step.
-- No macOS profile in `shuttle-java/pom.xml`.
+- No all-platform jar yet: each build packages only the host platform's
+  native libraries.
 - Generated WIT contexts default to version `0.2.6`
   (`WasmComponentContext.DEFAULT_VERSION`); a WIT package at `@1.0.0` is
   registered under the wrong version unless `getVersion()` is overridden.
@@ -150,7 +165,13 @@ packages `io.github.stefanrichterhuber.{wasmtimejavang,witparser,witcodegen}`.
 
 ## 7. Next steps (ask before each)
 
-See the end of the 2026-10-15 Claude Code session; the owner picks the
-order. Candidates: WSL2 build, fixing `maven.yml`, reviewing section 5, and
-deciding how the Weave JNI layer and `native/shuttle-core` relate (then
-designing the Machine API JNI layer).
+The owner picks the order. Candidates:
+
+1. Finish `feature/unified-ci` (CI green on all six platforms, PR, merge).
+2. WSL2 native build (after the owner installs the tools).
+3. Decide how the Weave JNI layer (`shuttle-java`, Weave `0f26893`) and
+   `native/shuttle-core` (`677cce6`) relate, then design the Machine API JNI
+   layer. Review section 5 as part of it.
+4. All-platform jar / distribution (Maven Central, GitHub Releases, bundled
+   in the RC mod, ...).
+5. Smaller known issues from section 6.

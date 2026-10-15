@@ -1,0 +1,85 @@
+# Builds everything on all six target platforms. CI only builds; tests are run
+# on the developer machine.
+#
+# - guests: the C test guests (wasm32, identical everywhere), built once
+# - native: the native/ Cargo workspace (shuttle-core, shuttle-runner)
+# - java:   the Maven reactor; each runner builds the JNI libraries for its own
+#           platform through the host-* profile the root pom activates
+#
+# setup-rust-toolchain sets RUSTFLAGS=-D warnings, so Rust warnings fail the build.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  guests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install clang and lld
+        run: sudo apt-get update && sudo apt-get install -y clang lld
+      - name: Build guests
+        run: sh native/guests/build.sh
+
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64, os: ubuntu-latest }
+          - { name: linux-aarch64, os: ubuntu-24.04-arm }
+          - { name: windows-x86_64, os: windows-latest }
+          - { name: windows-aarch64, os: windows-11-arm }
+          - { name: macos-x86_64, os: macos-15-intel }
+          - { name: macos-aarch64, os: macos-latest }
+    name: native (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: native
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache-workspaces: native
+      - name: Build
+        run: cargo build --locked --release
+
+  java:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x86_64, os: ubuntu-latest }
+          - { name: linux-aarch64, os: ubuntu-24.04-arm }
+          - { name: windows-x86_64, os: windows-latest }
+          - { name: windows-aarch64, os: windows-11-arm }
+          - { name: macos-x86_64, os: macos-15-intel }
+          - { name: macos-aarch64, os: macos-latest }
+    name: java (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    defaults:
+      run:
+        # bash on every OS: PowerShell would split -Dcargo.profile=release at the dot
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: wasm32-unknown-unknown # the valuetest fixture is built even with -DskipTests
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: temurin
+          cache: maven
+      - name: Build with Maven
+        run: mvn -B -DskipTests -Dcargo.profile=release -Dcargo.profile.folder=release package

@@ -147,6 +147,97 @@
 
     <!-- Profiles -->
     <profiles>
+        <!-- Host platform profiles. Exactly one is activated automatically from the running
+        JVM's os.name / os.arch, and sets what the JNI modules need to build their native
+        library for that platform with plain `cargo` (no cross, no Docker):
+          native.rust.target  Rust target triple
+          native.libdir       folder under libs/ that jar-jni loads from (JNA naming)
+          native.lib.ext      file extension of the built library -->
+        <profile>
+            <id>host-linux-x86-64</id>
+            <activation>
+                <os>
+                    <name>linux</name>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <properties>
+                <native.rust.target>x86_64-unknown-linux-gnu</native.rust.target>
+                <native.libdir>linux-x86-64</native.libdir>
+                <native.lib.ext>so</native.lib.ext>
+            </properties>
+        </profile>
+        <profile>
+            <id>host-linux-aarch64</id>
+            <activation>
+                <os>
+                    <name>linux</name>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <native.rust.target>aarch64-unknown-linux-gnu</native.rust.target>
+                <native.libdir>linux-aarch64</native.libdir>
+                <native.lib.ext>so</native.lib.ext>
+            </properties>
+        </profile>
+        <profile>
+            <id>host-windows-x86-64</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>amd64</arch>
+                </os>
+            </activation>
+            <properties>
+                <native.rust.target>x86_64-pc-windows-msvc</native.rust.target>
+                <native.libdir>win32-x86-64</native.libdir>
+                <native.lib.ext>dll</native.lib.ext>
+            </properties>
+        </profile>
+        <profile>
+            <id>host-windows-aarch64</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <native.rust.target>aarch64-pc-windows-msvc</native.rust.target>
+                <native.libdir>win32-aarch64</native.libdir>
+                <native.lib.ext>dll</native.lib.ext>
+            </properties>
+        </profile>
+        <profile>
+            <id>host-macos-x86-64</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>x86_64</arch>
+                </os>
+            </activation>
+            <properties>
+                <native.rust.target>x86_64-apple-darwin</native.rust.target>
+                <native.libdir>darwin-x86-64</native.libdir>
+                <native.lib.ext>dylib</native.lib.ext>
+            </properties>
+        </profile>
+        <profile>
+            <id>host-macos-aarch64</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                    <arch>aarch64</arch>
+                </os>
+            </activation>
+            <properties>
+                <native.rust.target>aarch64-apple-darwin</native.rust.target>
+                <native.libdir>darwin-aarch64</native.libdir>
+                <native.lib.ext>dylib</native.lib.ext>
+            </properties>
+        </profile>
+
         <!-- Release profile -->
         <profile>
             <id>release</id>

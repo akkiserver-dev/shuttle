@@ -53,9 +53,9 @@ cargo build
 ./target/debug/shuttle-runner verify guests/out/bios.wasm guests/out/os.wasm guests/out/child.wasm
 ```
 
-CI (`.github/workflows/native.yml`) builds the guests once on Linux, then
-builds and runs `verify` on Linux, Windows and macOS, each on x86_64 and
-arm64.
+CI (`.github/workflows/ci.yml`) builds the guests once on Linux, and builds
+the workspace on Linux, Windows and macOS, each on x86_64 and arm64. It does
+not run `verify`; run it locally.
 
 `run` boots and prints the log until power-off. `verify` runs once without
 interruption, then once per tick boundary with capture → restore into a

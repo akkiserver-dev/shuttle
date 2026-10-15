@@ -68,10 +68,32 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.2.0</version>
                 <executions>
-
-
-
-
+                    <!-- Build the wasmtime-binding JNI library for the host platform. The
+                    target and library folder come from the host-* profile the root pom
+                    activates for the current OS and CPU. -->
+                    <execution>
+                        <id>build wasmtime-binding</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <executable>cargo</executable>
+                            <workingDirectory>${project.basedir}/src/main/rust/wasmtime-binding</workingDirectory>
+                            <arguments>
+                                <argument>build</argument>
+                                <argument>--profile</argument>
+                                <argument>${cargo.profile}</argument>
+                                <argument>--target</argument>
+                                <argument>${native.rust.target}</argument>
+                                <argument>--target-dir</argument>
+                                <argument>${project.build.directory}/rust</argument>
+                            </arguments>
+                            <environmentVariables>
+                                <RUSTUP_TOOLCHAIN>stable</RUSTUP_TOOLCHAIN>
+                            </environmentVariables>
+                        </configuration>
+                    </execution>
 
                     <execution>
                         <id>build wasm test valuetest</id>
@@ -101,378 +123,35 @@
                 </executions>
             </plugin>
 
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <!-- Copy the library into the folder jar-jni looks in for the running
+                    platform, e.g. libs/win32-x86-64/wasmtimebinding.dll. -->
+                    <execution>
+                        <id>copy wasmtime-binding</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/classes/jp/akkiserver/shuttle/libs/${native.libdir}</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.build.directory}/rust/${native.rust.target}/${cargo.profile.folder}</directory>
+                                    <filtering>false</filtering>
+                                    <includes>
+                                        <include>*.${native.lib.ext}</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
-    <!-- Profiles -->
-    <profiles>
-        <!-- Build linux x86 64 bit version of wasmtime-binding native rust library, active by
-        default -->
-        <profile>
-            <id>build-linux-x86-64</id>
-            <activation>
-                <property>
-                    <name>build-linux-x86-64</name>
-                    <value>true</value>
-                </property>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.2.0</version>
-                        <executions>
-                            <!-- Only build for all platforms during release -->
-                            <execution>
-                                <id>build linux x86 64 bit</id>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <phase>compile</phase>
-                                <configuration>
-                                    <executable>cross</executable>
-                                    <workingDirectory>
-                                        ${project.basedir}/src/main/rust/wasmtime-binding</workingDirectory>
-                                    <arguments>
-                                        <argument>build</argument>
-                                        <argument>--profile</argument>
-                                        <argument>${cargo.profile}</argument>
-                                        <argument>--target</argument>
-                                        <argument>x86_64-unknown-linux-gnu</argument>
-                                        <argument>--target-dir</argument>
-                                        <argument>${project.build.directory}/rust</argument>
-                                    </arguments>
-                                    <environmentVariables>
-                                        <RUSTUP_TOOLCHAIN>stable</RUSTUP_TOOLCHAIN>
-                                    </environmentVariables>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>3.3.1</version>
-                        <executions>
-
-                            <!-- Copy the libraries build to the libs folder within the classes, in
-                            a folder
-              matching
-          the JNA convention to find the suitable library for a target-->
-                            <execution>
-                                <id>copy-lib-linux-x86-64</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>
-                                        ${project.build.directory}/classes/jp/akkiserver/shuttle/libs/linux-x86-64</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>
-                                                ${project.build.directory}/rust/x86_64-unknown-linux-gnu/${cargo.profile.folder}</directory>
-                                            <filtering>false</filtering>
-                                            <includes>
-                                                <include>*.so</include>
-                                            </includes>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Build linux aarch64 bit version of wasmtime-binding native rust library -->
-        <profile>
-            <id>build-linux-aarch64</id>
-            <activation>
-                <property>
-                    <name>build-linux-aarch64</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.2.0</version>
-                        <executions>
-                            <!-- Only build for all platforms during release -->
-                            <execution>
-                                <id>build linux ARM64 bit</id>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <phase>compile</phase>
-                                <configuration>
-                                    <executable>cross</executable>
-                                    <workingDirectory>
-                                        ${project.basedir}/src/main/rust/wasmtime-binding</workingDirectory>
-                                    <arguments>
-                                        <argument>build</argument>
-                                        <argument>--profile</argument>
-                                        <argument>${cargo.profile}</argument>
-                                        <argument>--target</argument>
-                                        <argument>aarch64-unknown-linux-gnu</argument>
-                                        <argument>--target-dir</argument>
-                                        <argument>${project.build.directory}/rust</argument>
-                                    </arguments>
-                                    <environmentVariables>
-                                        <RUSTUP_TOOLCHAIN>stable</RUSTUP_TOOLCHAIN>
-                                    </environmentVariables>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>3.3.1</version>
-                        <executions>
-                            <execution>
-                                <id>copy-lib-linux-aarch64</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>
-                                        ${project.build.directory}/classes/jp/akkiserver/shuttle/libs/linux-aarch64</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>
-                                                ${project.build.directory}/rust/aarch64-unknown-linux-gnu/${cargo.profile.folder}</directory>
-                                            <filtering>false</filtering>
-                                            <includes>
-                                                <include>*.so</include>
-                                            </includes>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>build-windows-x86_64</id>
-            <activation>
-                <property>
-                    <name>build-windows-x86_64</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.2.0</version>
-                        <executions>
-                            <execution>
-                                <id>build windows x86 64 bit</id>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <phase>compile</phase>
-                                <configuration>
-                                    <executable>cross</executable>
-                                    <workingDirectory>${project.basedir}/src/main/rust/wasmtime-binding</workingDirectory>
-                                    <arguments>
-                                        <argument>build</argument>
-                                        <argument>--profile</argument>
-                                        <argument>${cargo.profile}</argument>
-                                        <argument>--target</argument>
-                                        <argument>x86_64-pc-windows-msvc</argument>
-                                        <argument>--target-dir</argument>
-                                        <argument>${project.build.directory}/rust</argument>
-                                    </arguments>
-                                    <environmentVariables>
-                                        <RUSTUP_TOOLCHAIN>stable</RUSTUP_TOOLCHAIN>
-                                    </environmentVariables>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>3.3.1</version>
-                        <executions>
-                            <execution>
-                                <id>copy-lib-windows-x86-64</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/classes/jp/akkiserver/shuttle/libs/win32-x86-64</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${project.build.directory}/rust/x86_64-pc-windows-msvc/${cargo.profile.folder}</directory>
-                                            <filtering>false</filtering>
-                                            <includes>
-                                                <include>*.dll</include>
-                                            </includes>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <!-- Windows x86_64 built with the local cargo (no Docker/cross needed): mvn -P build-host-windows-x86_64 -->
-        <profile>
-            <id>build-host-windows-x86_64</id>
-            <activation>
-                <property>
-                    <name>build-host-windows-x86_64</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.2.0</version>
-                        <executions>
-                            <execution>
-                                <id>build host windows x86 64 bit</id>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <phase>compile</phase>
-                                <configuration>
-                                    <executable>cargo</executable>
-                                    <workingDirectory>${project.basedir}/src/main/rust/wasmtime-binding</workingDirectory>
-                                    <arguments>
-                                        <argument>build</argument>
-                                        <argument>--profile</argument>
-                                        <argument>${cargo.profile}</argument>
-                                        <argument>--target</argument>
-                                        <argument>x86_64-pc-windows-msvc</argument>
-                                        <argument>--target-dir</argument>
-                                        <argument>${project.build.directory}/rust</argument>
-                                    </arguments>
-                                    <environmentVariables>
-                                        <RUSTUP_TOOLCHAIN>stable</RUSTUP_TOOLCHAIN>
-                                    </environmentVariables>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>3.3.1</version>
-                        <executions>
-                            <execution>
-                                <id>copy-lib-host-windows-x86-64</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/classes/jp/akkiserver/shuttle/libs/win32-x86-64</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${project.build.directory}/rust/x86_64-pc-windows-msvc/${cargo.profile.folder}</directory>
-                                            <filtering>false</filtering>
-                                            <includes>
-                                                <include>*.dll</include>
-                                            </includes>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>build-windows-aarch64</id>
-            <activation>
-                <property>
-                    <name>build-windows-aarch64</name>
-                    <value>true</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.2.0</version>
-                        <executions>
-                            <execution>
-                                <id>build windows aarch64</id>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <phase>compile</phase>
-                                <configuration>
-                                    <executable>cross</executable>
-                                    <workingDirectory>${project.basedir}/src/main/rust/wasmtime-binding</workingDirectory>
-                                    <arguments>
-                                        <argument>build</argument>
-                                        <argument>--profile</argument>
-                                        <argument>${cargo.profile}</argument>
-                                        <argument>--target</argument>
-                                        <argument>aarch64-pc-windows-msvc</argument>
-                                        <argument>--target-dir</argument>
-                                        <argument>${project.build.directory}/rust</argument>
-                                    </arguments>
-                                    <environmentVariables>
-                                        <RUSTUP_TOOLCHAIN>stable</RUSTUP_TOOLCHAIN>
-                                    </environmentVariables>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>3.3.1</version>
-                        <executions>
-                            <execution>
-                                <id>copy-lib-windows-aarch64</id>
-                                <phase>compile</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/classes/jp/akkiserver/shuttle/libs/win32-aarch64</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${project.build.directory}/rust/aarch64-pc-windows-msvc/${cargo.profile.folder}</directory>
-                                            <filtering>false</filtering>
-                                            <includes>
-                                                <include>*.dll</include>
-                                            </includes>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>
