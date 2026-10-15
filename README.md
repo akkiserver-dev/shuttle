@@ -1,8 +1,57 @@
-[![CI](https://github.com/StefanRichterHuber/wasmtime-ng/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/StefanRichterHuber/wasmtime-ng/actions/workflows/maven.yml)
+[![Native (Shuttle)](https://github.com/akkiserver-dev/shuttle/actions/workflows/native.yml/badge.svg)](https://github.com/akkiserver-dev/shuttle/actions/workflows/native.yml)
 
-# Wasmtime-java-ng
+# Shuttle
 
-> **Disclaimer:** This project is an independent community effort and is not affiliated with, maintained, or endorsed by the original [Wasmtime project](https://github.com/bytecodealliance/wasmtime) or the Bytecode Alliance.
+> **Status:** early prototype. Nothing here is playable yet; the native core runs headless only.
+
+Shuttle is a Minecraft (NeoForge) mod that adds programmable computers, in the spirit of OpenComputers and CC:Tweaked. Unlike those mods, everything a Shuttle computer runs is **WebAssembly**:
+
+```
+firmware (provided by the mod)
+  └─ BIOS            player-made Wasm, stored on an EEPROM item
+       └─ OS kernel  player-made Wasm, started by the BIOS with `exec`
+            └─ child programs  started by the kernel with `co_create`
+```
+
+The firmware talks to guests only through the **firmware ABI** (`fw.*`, `co.*`, `sys.call`). Device calls look like OpenComputers method calls, either synchronous (`dev_call`) or asynchronous (`dev_submit` + a completion event).
+
+## How it works
+
+- **Runtime:** [Wasmtime](https://github.com/bytecodealliance/wasmtime), made checkpointable with [Weave](https://github.com/akkiserver-dev/weave) (branch `shuttle-host-hooks`). Weave transforms a Wasm module so that a running program can be unwound into its linear memory and rebuilt later. This lets a computer be saved with the world and continue mid-execution after a reload.
+- **Native core (Rust):** Wasmtime, Weave, the `co_*` machinery, memory limits and snapshot capture. It runs guests on its own worker thread pool.
+- **Mod (Java):** device implementations and the high-level Machine API, connected to the native core through JNI.
+- **Targets:** Windows, macOS and Linux, each on x86_64 and arm64.
+
+## Repository layout
+
+| Path | What |
+| --- | --- |
+| [`native/`](native) | Shuttle native core (Rust): `shuttle-core`, the headless `shuttle-runner`, and C test guests. See [`native/README.md`](native/README.md). |
+| [`wasmtimejavang/`](wasmtimejavang) | Java bindings for Wasmtime (see [below](#wasmtime-java-binding-wasmtimejavang)). |
+| [`wit-parser/`](wit-parser), [`wit-codegen-maven-plugin/`](wit-codegen-maven-plugin) | Build-time WIT tooling for the Java bindings. |
+
+## Building the native core
+
+Requirements: Rust (rustup), and clang + wasm-ld for the C guests (the [LLVM installer](https://github.com/llvm/llvm-project/releases) on Windows, `sudo apt install clang lld` on Linux/WSL2).
+
+```powershell
+.\native\scripts\build.ps1          # Windows: build guests + workspace, then verify
+```
+```sh
+./native/scripts/build.sh           # Linux / WSL2
+```
+
+`verify` boots BIOS → OS → child, then repeats the run with capture → restore into a fresh machine at every tick boundary and checks that the logs are identical. Release binaries for all six platforms are built by CI ([`.github/workflows/native.yml`](.github/workflows/native.yml)).
+
+## Credits and license
+
+The Java Wasmtime bindings in this repository are a fork of [StefanRichterHuber/wasmtime-ng](https://github.com/StefanRichterHuber/wasmtime-ng) (MIT, © 2024 Stefan Richter-Huber). See [LICENSE](LICENSE).
+
+> **Disclaimer:** This project is an independent community effort and is not affiliated with, maintained, or endorsed by the [Wasmtime project](https://github.com/bytecodealliance/wasmtime), the Bytecode Alliance, Mojang or Microsoft.
+
+## Wasmtime Java binding (wasmtimejavang)
+
+The rest of this document comes from the upstream project and describes the Java bindings.
 
 > **AI Disclaimer:** Parts of this project were vibe-coded or written with the help of an AI assistant (Claude); the remaining parts were written by hand.
 
@@ -10,7 +59,7 @@ Wasmtime-java-ng provides Java bindings for [Wasmtime](https://github.com/byteco
 
 This project allows Java applications to execute WebAssembly modules, interact with linear memory, and leverage the WebAssembly System Interface (WASI) through a native bridge built on Rust.
 
-## Project Structure
+### Project Structure
 
 This repository is a Maven multi-module reactor. As of this version, `wasmtimejavang` is a **core** artifact (Wasmtime primitives, the Component Model plumbing, WASI Preview 1) plus one artifact per WASI Preview 2 "world" — so a consumer only pulls in the WASI Preview 2 support they actually use, instead of everything at once:
 
@@ -21,7 +70,7 @@ This repository is a Maven multi-module reactor. As of this version, `wasmtimeja
 
 Pick only the artifacts you need: depending on `wasmtimejavang` alone gets you core-wasm + WASI Preview 1, with no Component Model support at all; add whichever `wasmtimejavang-wasi-*` artifacts you actually need (each transitively pulls in `wasmtimejavang-wasi-io` where required) — e.g. just `wasmtimejavang-wasi-http` for an outgoing-HTTP-only guest, or `wasmtimejavang-wasi-cli` + `wasmtimejavang-wasi-filesystem` for a sandboxed-filesystem CLI tool.
 
-## Prerequisites
+### Prerequisites
 
 Building this project requires both Rust and Java toolchains:
 
@@ -29,7 +78,7 @@ Building this project requires both Rust and Java toolchains:
 * **Rust** and **Cargo**
 * **[cross-rs](https://github.com/cross-rs/cross)** and **Docker** (required for cross-platform native builds)
 
-## Building
+### Building
 
 The project uses Maven to orchestrate both the Java compilation and the Rust native build. To build the entire project for Linux x86_64:
 
@@ -37,7 +86,7 @@ The project uses Maven to orchestrate both the Java compilation and the Rust nat
 mvn clean install 
 ```
 
-### Multi-Platform Builds
+#### Multi-Platform Builds
 
 By default, only the native library for Linux x86_64 is built. You can target specific platforms using Maven profiles:
 
@@ -57,7 +106,7 @@ For production environments, the `release` profile optimizes the Rust binaries f
 mvn -P release,build-linux-x86-64,build-linux-aarch64,build-windows-x86_64 clean install
 ```
 
-## Usage
+### Usage
 
 Include the core dependency into your project `pom.xml` (the published artifact contains native libraries for Linux x86_64, Linux aarch64 and Windows x86_64):
 
@@ -79,7 +128,7 @@ This alone gets you core-wasm execution and WASI Preview 1 — no WASI Preview 2
 </dependency>
 ```
 
-### Function Imports
+#### Function Imports
 
 You can import Java methods into the WebAssembly context, allowing WASM modules to invoke native Java code.
 
@@ -111,7 +160,7 @@ try (
 }
 ```
 
-### Supported WASM Types
+#### Supported WASM Types
 
 All type conversions are bi-directional if not mentioned otherwise.
 
@@ -125,7 +174,7 @@ All type conversions are bi-directional if not mentioned otherwise.
 | **`FuncRef`** | `io.github.stefanrichterhuber.wasmtimejavang.WasmtimeFunction` | Callable function reference. Currently export from wasm to java supported |
 | **`ExternRef`** | any java object | Any java object can be passed through the wasm runtime as extern ref |
 
-### Memory Interaction
+#### Memory Interaction
 
 The `WasmtimeMemory` class provides efficient access to the WASM linear memory by mapping it directly to a `java.nio.ByteBuffer`.
 
@@ -164,11 +213,11 @@ try (WasmtimeInstance instance = new WasmtimeInstance(store, module, linker)) {
 }
 ```
 
-## WASI Snapshot Preview 1
+### WASI Snapshot Preview 1
 
 While Wasmtime provides built-in WASI support, this library implements WASI Preview 1 directly on the Java side (`WasiPI1Context`). This approach reduces indirection and allows WASM modules to interact directly with Java objects, such as `InputStream`, `OutputStream`, and virtual filesystems.
 
-### Virtualized Filesystem
+#### Virtualized Filesystem
 
 To protect the host system, you can use a virtual filesystem like [JimFS](https://github.com/google/jimfs) to provide a sandboxed environment for the WASM module.
 
@@ -189,7 +238,7 @@ try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 }
 ```
 
-### Supported WASI Functions
+#### Supported WASI Functions
 
 | Category | Functions | Status | Configuration |
 | :--- | :--- | :---: | :--- |
@@ -204,7 +253,7 @@ try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
 | **Network** | `sock_accept`, `sock_recv`, `sock_send`, `sock_shutdown` | ✅ | `withSocket()`, `withServerSocket()` |
 | **Polling** | `poll_oneoff` | 🟡 | Clock events supported |
 
-### Configuration Options
+#### Configuration Options
 
 `WasiPI1Context` provides a fluent API for resource virtualization:
 
@@ -214,7 +263,7 @@ try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
     * `withSocket(java.net.Socket)`: Pre-opens a client socket.
     * `withServerSocket(java.net.ServerSocket)`: Pre-opens a listening socket.
 
-### WASI threads
+#### WASI threads
 
 There is some preliminary support for WASI threads using the additional context `WasiThreadContext`.
 
@@ -250,7 +299,7 @@ There is some preliminary support for WASI threads using the additional context 
 
 > **Info:** As of now, nightly toolchain is required to properly build rust wasm wasip1 apps with thread support!
 
-## WASI Preview 2 / Component Model (`wasm32-wasip2`)
+### WASI Preview 2 / Component Model (`wasm32-wasip2`)
 
 Alongside core-module WASI Preview 1, this library supports the [Component Model](https://component-model.bytecodealliance.org/) (`wasm32-wasip2` binaries) — again with WASI implemented on the Java side rather than delegated to `wasmtime-wasi`. It's built from three pieces:
 
@@ -282,7 +331,7 @@ try (
 
 `linkRequired` only fills in interfaces nothing has already been linked for, so `linkContext(...)` calls made beforehand always take precedence — this is also the mechanism for overriding built-in behavior (see below).
 
-### Supported WASI Preview 2 interfaces
+#### Supported WASI Preview 2 interfaces
 
 Each interface group lives in its own `WasmComponentContext` implementation under the `wasip2` package, each in its own Maven artifact, and all seven are auto-discovered by `linkRequired(...)` with zero configuration as long as their artifact is on the classpath — see [Project Structure](#project-structure).
 
@@ -330,7 +379,7 @@ linker.linkContext(new WasiHttpContext());
 linker.linkRequired(component); // pulls in wasi-io, wasi-clocks, wasi-random
 ```
 
-### Implementing your own component context
+#### Implementing your own component context
 
 This is the mechanism that matters most for actually using this library: WASI is just the *built-in* set of `WasmComponentContext` implementations, and any Java application can define its own to expose custom host functionality — database access, business logic, whatever — to a component's imports, the exact same way. There are two ways to implement one: hand-write it directly against `WasmComponentContext` (full control, shown first below), or generate a typed interface from a WIT file via `wit-codegen-maven-plugin` and implement just the typed methods (less boilerplate — no manual version-string wiring or `Object[]` casts). Both are shown below using the same example (its full source is in the repo and covered by `WasmtimeCustomComponentTest`, so it's guaranteed to stay in sync with the code, not just aspirational documentation).
 
@@ -517,7 +566,7 @@ public void onDependenciesResolved(ComponentContextLookup lookup) {
 
 **Watch out:** `getProvidedInterfaces()` must be overridden (or, for a generated interface, already resolve correctly) even for a context that's *always* linked explicitly via `linkContext(...)` and never registered for `ServiceLoader` discovery — if that same call site also calls `linkRequired(...)` afterwards (as step 4 does), `linkRequired` has no other way to know the explicitly-linked context already satisfies the interface, and raises `IllegalStateException` for it. This is why the hand-written `GreetComponentContext` overrides `getProvidedInterfaces()` above even though it's never meant to be auto-discovered.
 
-### Overriding a built-in WASI Preview 2 context
+#### Overriding a built-in WASI Preview 2 context
 
 None of the `Wasi*Context` classes are `final`, and the built-ins are only ever *auto-linked* — never forced — so there are two ways to override one:
 
@@ -537,11 +586,11 @@ public class Ipv6TcpSocketsContext extends WasiSocketsContext {
 
 These generated interfaces are regular public types shipped in the jar, under `io.github.stefanrichterhuber.wasmtimejavang.wasip2.generated.wasicli` — see [Implementing your own component context](#implementing-your-own-component-context) above for how they're produced and how to generate your own from a custom WIT interface.
 
-### Version negotiation
+#### Version negotiation
 
 Every `WasmComponentContext` tracks a `SemanticVersion` (`withVersion`/`getVersion`), used to build the actual versioned interface name (e.g. `"wasi:cli/environment@0.2.6"`) each import is registered under — `getProvidedInterfaces()` itself stays version-independent (bare names), so lookup/auto-discovery doesn't need to know a component's exact required version up front. `getMiniumVersion()`/`getMaximumVersion()` (defaulted to accept anything) bound what `supportsVersion(...)` — and therefore `ComponentContextLookup.resolve(...)` — accepts; the built-in WASI contexts default to `0.2.6` (what `cargo build --target wasm32-wasip2` on current stable Rust actually emits) and accept `[0.0.1, 0.3.0]`, so they're ready for the eventual WASI 0.3 interfaces without code changes once toolchains catch up, but can be pinned with `.withVersion(...)` if a component needs something else within that range. `WasiHttpContext` is the one exception, defaulting to `0.2.8` and accepting `[0.2.0, 0.3.0]` — `wasi:http` isn't part of what the stable target emits automatically, so there's no single "current" version to match; `0.2.8` is simply what this project's own `wasi-http` WIT sources declare.
 
-## Architecture
+### Architecture
 
 `wasmtimejavang` (the core artifact — see [Project Structure](#project-structure) above for the other modules) is structured into three distinct layers:
 
@@ -551,13 +600,13 @@ Every `WasmComponentContext` tracks a `SemanticVersion` (`withVersion`/`getVersi
 
 All modules are tested using JUnit. Test coverage is measured with Jacoco. The neccessary wasm modules for testing are build with rust (see each module's own `src/test/rust`, where present). Using `exec-maven-plugin` these wasm modules are build in the `generate-test-resources` phase.
 
-## Breaking changes
+### Breaking changes
 
 * **Version 6.x.x**: Splitting the project into separate modules — three at first (`wasmtimejavang`, `wit-parser`, `wit-codegen-maven-plugin`), now further split so every WASI Preview 2 world ships as its own artifact depending on a `wasmtimejavang` core (`wasmtimejavang-wasi-{io,clocks,random,cli,filesystem,sockets,http}` — see [Project Structure](#project-structure)); Introduction of the wit-parser to automatically generate bindings for wasm32-wasip2; No changes for wasm32-wasip1 support
 * **Version 5.x.x**: Introduction of wasm32-wasip2 support; No changes for wasm32-wasip1 support
 * **Version 4.x.x**: Changed signature of Wasmfunction
 
-## Comparison to Previous Work
+### Comparison to Previous Work
 
 This implementation aims to be more maintainable and feature-complete than earlier attempts:
 
