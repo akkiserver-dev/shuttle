@@ -21,10 +21,21 @@
 
     <developers>
         <developer>
+            <name>akki</name>
+            <organization>akkiserver-dev</organization>
+            <organizationUrl>https://github.com/akkiserver-dev</organizationUrl>
+            <roles>
+                <role>maintainer</role>
+            </roles>
+        </developer>
+        <developer>
             <name>Stefan Richter-Huber</name>
             <email>stefan@richter-huber.de</email>
             <organization>Stefan Richter-Huber</organization>
             <organizationUrl>https://github.com/StefanRichterHuber</organizationUrl>
+            <roles>
+                <role>original author (wasmtime-java-ng)</role>
+            </roles>
         </developer>
     </developers>
 
