@@ -30,7 +30,7 @@ The result types are records:
 
 Supported: records, variants, enums, flags, options, results, tuples, lists, resources and all scalar types. Unsupported constructs throw: the WIT 0.3 async surface, `stream`/`future`, `map`, and fixed-length lists.
 
-The native library is only packaged for Linux x86_64. On Windows the parser cannot load it (see [building.md](building.md#known-issues)).
+The native library is built for the platform Maven runs on (Linux, Windows or macOS, x86_64 or arm64); see [building.md](building.md#host-platform-profiles).
 
 ## `shuttle-wit-maven-plugin`
 
@@ -181,8 +181,3 @@ public class MyBundledContext implements FooContext, BarContext {
     // interfaces cannot hold state.
 }
 ```
-
-## Known issues
-
-- **Generated imports for `variant`, `enum`, `result` and resources are broken.** The rename turned the import lines in `WitCodeGenerator.requiredImports` into `import component.jp.akkiserver.shuttle.WitVariant;` (and the same for `WitEnum`, `WitResult`, `WitResource`). The correct package is `jp.akkiserver.shuttle.component`. Generated code that uses any of these types does not compile until this is fixed. `greet.wit` is not affected.
-- The parser only loads on Linux x86_64 (see [building.md](building.md#known-issues)).

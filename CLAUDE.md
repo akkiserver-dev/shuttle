@@ -51,8 +51,11 @@ will include it by default. Current status and open decisions:
 - Maven: there is no `mvn` on PATH. Use IntelliJ's bundled Maven,
   `%LOCALAPPDATA%\Programs\IntelliJ IDEA\plugins\maven-plugin\lib\maven3\bin\mvn.cmd`,
   with `JAVA_HOME=%USERPROFILE%\.jdks\temurin-25.0.4` (the global
-  `JAVA_HOME` points at `bin\` and is wrong), and the profile
-  `-P build-host-windows-x86_64`. The default profile uses cross + Docker.
+  `JAVA_HOME` points at `bin\` and is wrong). No `-P` is needed: the root
+  pom activates the `host-windows-x86-64` profile automatically. Quote
+  `-D...` arguments in PowerShell (`"-Dcargo.profile=release"`).
+- Tests run on this machine only; CI (`.github/workflows/ci.yml`) only builds,
+  on six platforms.
 - JNI class names are also written as strings in Rust (`java_type = "..."`).
   After renaming Java classes or packages, grep the `.rs` files and run the
   tests: a wrong name compiles but fails at run time.
