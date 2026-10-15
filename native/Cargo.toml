@@ -1,0 +1,24 @@
+[workspace]
+resolver = "2"
+members = ["crates/shuttle-core", "crates/shuttle-runner"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+wasmtime = { version = "46", default-features = false, features = ["cranelift", "runtime", "gc", "gc-drc", "threads", "parallel-compilation"] }
+weave-core = { git = "https://github.com/akkiserver-dev/weave", rev = "677cce64cf9728485849af21f7bf36f801175d4f" }
+weave-transform = { git = "https://github.com/akkiserver-dev/weave", rev = "677cce64cf9728485849af21f7bf36f801175d4f" }
+weave-host = { git = "https://github.com/akkiserver-dev/weave", rev = "677cce64cf9728485849af21f7bf36f801175d4f" }
+weave-wasmtime = { git = "https://github.com/akkiserver-dev/weave", rev = "677cce64cf9728485849af21f7bf36f801175d4f" }
+flate2 = "1"
+shuttle-core = { path = "crates/shuttle-core" }
+
+[profile.dev]
+opt-level = 1
+debug = 0
+
+[profile.dev.package."*"]
+opt-level = 2
