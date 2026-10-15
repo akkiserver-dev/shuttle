@@ -88,7 +88,7 @@ bind_java_type! {
 /// Registry mapping a WIT resource kind name (e.g. "output-stream") to the
 /// arbitrary `u32` payload used to build its `ResourceType::host_dynamic`.
 /// Resource kind names are treated as process-wide unique identifiers, the
-/// same way WASI interface/resource names are globally scoped by spec.
+/// same way interface/resource names are globally scoped by spec.
 static RESOURCE_PAYLOADS: OnceLock<Mutex<HashMap<String, u32>>> = OnceLock::new();
 
 fn resource_payload_for(resource_name: &str) -> u32 {

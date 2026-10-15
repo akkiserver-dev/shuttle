@@ -27,27 +27,6 @@ bind_java_type! {
     },
 }
 
-bind_java_type! {
-    rust_type = pub JProcExitException,
-    java_type = "io.github.stefanrichterhuber.wasmtimejavang.wasip1.ProcExitException",
-
-    type_map {
-        JWasmRuntimeException => "io.github.stefanrichterhuber.wasmtimejavang.WasmRuntimeException",
-    },
-
-    constructors {
-        pub fn new_with_code(code: jint),
-    },
-
-    methods {
-        pub fn get_code() -> jint,
-    },
-
-    is_instance_of = {
-        wasmtime_exception: JWasmRuntimeException,
-    },
-}
-
 /// Wraps a java exception into a std::error::Error
 /// compatible struct so it can passed through the wasmtime error structs
 #[derive(Debug)]

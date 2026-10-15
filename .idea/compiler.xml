@@ -6,9 +6,10 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="wasmtimejavang" />
         <module name="wit-codegen-maven-plugin" />
         <module name="wit-parser" />
+        <module name="wasmtimejavang" />
+        <module name="wasmtimejavang-example" />
       </profile>
     </annotationProcessing>
   </component>

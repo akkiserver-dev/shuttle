@@ -28,7 +28,7 @@ public interface ComponentContextLookup {
     /**
      * Attempts to resolve an instance providing the named context.
      *
-     * @param name    The dependency name to resolve (e.g. {@code "wasi-io"}).
+     * @param name    The dependency name to resolve (e.g. {@code "my-io"}).
      * @param version Version required
      * @return An instance whose {@link WasmComponentContext#name()} is
      *         {@code name}, or empty if this strategy has none.
@@ -48,7 +48,7 @@ public interface ComponentContextLookup {
      * a minimal custom implementation) don't need to implement this too.
      *
      * @param interfaceName The component interface name to resolve a
-     *                      provider for (e.g. {@code "wasi:io/poll@0.2.6"}).
+     *                      provider for (e.g. {@code "my:custom/greet@1.0.0"}).
      * @return An instance whose
      *         {@link WasmComponentContext#getProvidedInterfaces()}
      *         contains {@code interfaceName}, or empty if this strategy has
@@ -60,7 +60,7 @@ public interface ComponentContextLookup {
 
     /**
      * Strips a trailing {@code "@version"} suffix off a component interface
-     * name (e.g. {@code "wasi:io/poll@0.2.6"} -&gt; {@code "wasi:io/poll"}),
+     * name (e.g. {@code "my:custom/greet@1.0.0"} -&gt; {@code "my:custom/greet"}),
      * matching the bare (version-independent) form
      * {@link WasmComponentContext#getProvidedInterfaces()} declares. Returns
      * {@code interfaceName} unchanged if it has no {@code "@"}.

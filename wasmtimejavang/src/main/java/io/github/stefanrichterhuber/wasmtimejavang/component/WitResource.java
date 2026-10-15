@@ -4,7 +4,7 @@ package io.github.stefanrichterhuber.wasmtimejavang.component;
  * Represents a WIT resource handle crossing the Rust/Java boundary.
  * <br>
  * The {@code rep} is an opaque integer chosen by whichever Java code created
- * the resource (typically a key into a per-context table, the same way WASI
+ * the resource (typically a key into a per-context table, the same way host APIs
  * Preview 1 uses plain {@code int} file descriptors).
  * <br>
  * {@code resourceName} identifies the resource's WIT name (e.g.
@@ -13,7 +13,7 @@ package io.github.stefanrichterhuber.wasmtimejavang.component;
  * build a value of the matching resource type). It is not populated when a
  * WitResource is handed to Java as an incoming function argument -- the
  * receiving Java code already knows the resource kind from which import
- * function was invoked, the same way WASI Preview 1 file descriptors carry no
+ * function was invoked, the same way plain integer handles carry no
  * type tag either.
  *
  * @param resourceName The WIT name of the resource kind, required only when

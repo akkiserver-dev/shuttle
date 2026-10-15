@@ -21,3 +21,4 @@ pub mod wasmtime_v128;
 pub mod wasmtime_valtype;
 pub mod wasmtimefuncref;
 pub mod wasmtimefunction;
+pub mod weave;

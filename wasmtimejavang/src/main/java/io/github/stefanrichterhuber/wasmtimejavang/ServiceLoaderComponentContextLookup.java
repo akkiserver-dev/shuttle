@@ -25,7 +25,7 @@ import java.util.ServiceLoader;
  * a problem the JDK already solves for a handful of known context names.</li>
  * <li>A full DI framework (Guice, Spring, CDI) is the wrong layer entirely
  * for a native-bridge library, and would force every consumer to adopt a
- * container just to use WASI support.</li>
+ * container just to use host API support.</li>
  * <li>JDK-internal SPI patterns predating {@code ServiceLoader} (e.g.
  * {@code DriverManager}-style static registries) are strictly less capable
  * and have themselves largely been superseded by {@code ServiceLoader}.</li>

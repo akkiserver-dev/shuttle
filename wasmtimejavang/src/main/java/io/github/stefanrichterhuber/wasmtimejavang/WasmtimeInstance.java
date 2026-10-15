@@ -92,7 +92,7 @@ public final class WasmtimeInstance implements AutoCloseable {
 
     /**
      * Invokes the _start (usually does some initializations and then calls main)
-     * function of the instance (Present in WASI modules)
+     * function of the instance (the conventional entry point of command-style modules)
      * 
      * @return A list of result values from the function call.
      */

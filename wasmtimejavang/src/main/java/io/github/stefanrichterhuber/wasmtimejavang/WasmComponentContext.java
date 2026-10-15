@@ -15,7 +15,7 @@ public interface WasmComponentContext {
      * Represents an imported component function definition.
      *
      * @param interfaceName The name of the component interface providing the
-     *                      function (e.g. {@code "wasi:cli/environment@0.2.3"},
+     *                      function (e.g. {@code "my:custom/greet@1.0.0"},
      *                      or the empty string for the root instance).
      * @param funcName      The name of the function within the interface.
      * @param function      The Java implementation of the function.
@@ -56,7 +56,7 @@ public interface WasmComponentContext {
      * <br>
      * Besides identifying the context in logs, this name is also the stable
      * identifier other contexts reference when declaring it as a dependency
-     * via {@link #getDependencies()} (e.g. {@code "wasi-io"}), and the key
+     * via {@link #getDependencies()} (e.g. {@code "my-io"}), and the key
      * {@link WasmtimeComponentLinker} caches linked contexts under -- so
      * implementations should keep it fixed rather than deriving it from
      * mutable configuration.
@@ -67,8 +67,8 @@ public interface WasmComponentContext {
 
     /**
      * Declares the names of other component contexts this context needs in
-     * order to function (e.g. a context implementing {@code wasi:cli/stdout}
-     * depending on {@code "wasi-io"} to hand off the actual stream table).
+     * order to function (e.g. a context implementing {@code my:custom/stdout}
+     * depending on {@code "my-io"} to hand off the actual stream table).
      * <br>
      * {@link WasmtimeComponentLinker} resolves each declared name -- via its
      * configured {@link ComponentContextLookup} -- and links the resolved
@@ -106,8 +106,8 @@ public interface WasmComponentContext {
 
     /**
      * Declares the names of the component interfaces this context actually
-     * implements (e.g. {@code "wasi:io/poll@0.2.6"},
-     * {@code "wasi:io/streams@0.2.6"}).
+     * implements (e.g. {@code "my:custom/greet@1.0.0"},
+     * {@code "my:custom/other@1.0.0"}).
      * <br>
      * Used by {@link WasmtimeComponentLinker#linkRequired(WasmtimeComponent)}
      * to automatically find and link a context providing a specific

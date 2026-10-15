@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 public class WasmtimeValueTest {
-    private static final String WASM_PATH = "target/rust-test/valuetest/wasm32-wasip1/debug/valuetest.wasm";
+    private static final String WASM_PATH = "target/rust-test/valuetest/wasm32-unknown-unknown/debug/valuetest.wasm";
 
     @Test
     public void testValues() throws Exception {

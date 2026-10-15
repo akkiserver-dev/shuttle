@@ -17,6 +17,11 @@ crate-type = ["cdylib"]
 wasmtime = { version = "46" }
 jni = { version = "0.22" }
 log = { version = "0.4", features = ["std"] }
+wat = "1.253"
+weave-wasmtime = { git = "https://github.com/akkiserver-dev/weave", rev = "0f26893477886c12dd881623c5813b3afcc844d2" }
+weave-core = { git = "https://github.com/akkiserver-dev/weave", rev = "0f26893477886c12dd881623c5813b3afcc844d2" }
+weave-host = { git = "https://github.com/akkiserver-dev/weave", rev = "0f26893477886c12dd881623c5813b3afcc844d2" }
+weave-transform = { git = "https://github.com/akkiserver-dev/weave", rev = "0f26893477886c12dd881623c5813b3afcc844d2" }
 
 [dev-dependencies]
 # Invocation feature is necessary for tests to spin up a VM

@@ -41,7 +41,7 @@ public final class WasmtimeComponentLinker implements AutoCloseable {
      * {@link WasmComponentContext#name()}
      * -- populated both by explicit {@link #linkContext} calls and by
      * dependency resolution, so a dependency shared by several contexts
-     * (e.g. several contexts all depending on {@code "wasi-io"}) is only
+     * (e.g. several contexts all depending on {@code "my-io"}) is only
      * ever linked -- and thus only ever instantiated as a shared
      * table-owner -- once, and every dependent shares that same instance.
      */
@@ -142,7 +142,7 @@ public final class WasmtimeComponentLinker implements AutoCloseable {
      * {@link WasmComponentContext#getDependencies()} (using the configured
      * {@link ComponentContextLookup}) that aren't already linked.
      *
-     * @param context The context providing imports (e.g. a WASI Preview 2
+     * @param context The context providing imports (e.g. a host API
      *                context).
      * @return This WasmtimeComponentLinker for method chaining
      */
@@ -190,7 +190,7 @@ public final class WasmtimeComponentLinker implements AutoCloseable {
      * This is what makes linking adapt to whatever a given component
      * actually needs instead of the caller having to know and explicitly
      * link every interface group up front: a component that doesn't use
-     * {@code wasi:clocks}, for example, simply won't cause anything
+     * {@code my:clocks}, for example, simply won't cause anything
      * implementing it to be linked. Contexts that need specific
      * configuration (e.g. capturing stdout) should still be linked
      * explicitly via {@link #linkContext(WasmComponentContext)} beforehand --

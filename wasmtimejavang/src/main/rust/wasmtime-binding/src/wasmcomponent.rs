@@ -124,7 +124,7 @@ impl JWasmtimeComponentNativeInterface for JWasmtimeComponentAPI {
     }
 
     /// Names of the component's top-level named interface imports (e.g.
-    /// `"wasi:io/poll@0.2.6"`). Bare root-level function imports (not
+    /// `"my:custom/greet@1.0.0"`). Bare root-level function imports (not
     /// associated with a named interface) are not included.
     fn import_interfaces<'local>(
         env: &mut ::jni::Env<'local>,
@@ -145,7 +145,7 @@ impl JWasmtimeComponentNativeInterface for JWasmtimeComponentAPI {
     }
 
     /// Names of the component's top-level named interface exports (e.g.
-    /// `"wasi:cli/run@0.2.6"`). Bare root-level function exports (not
+    /// `"my:custom/greet@1.0.0"`). Bare root-level function exports (not
     /// associated with a named interface) are not included.
     fn export_interfaces<'local>(
         env: &mut ::jni::Env<'local>,

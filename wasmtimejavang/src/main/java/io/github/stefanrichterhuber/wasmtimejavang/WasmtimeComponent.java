@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * Represents a compiled WebAssembly component (e.g. a {@code wasm32-wasip2}
+ * Represents a compiled WebAssembly component (e.g. a component-model
  * binary), as opposed to a core WebAssembly {@link WasmtimeModule}.
  * Once compiled, it can be instantiated multiple times via a
  * {@link WasmtimeComponentLinker} / {@link WasmtimeComponentInstance}.
@@ -114,7 +114,7 @@ public final class WasmtimeComponent implements AutoCloseable {
 
     /**
      * Returns the names of this component's top-level named interface
-     * imports (e.g. {@code "wasi:io/poll@0.2.6"}), read directly from the
+     * imports (e.g. {@code "my:custom/greet@1.0.0"}), read directly from the
      * compiled component via wasmtime -- no instantiation or linking
      * required. Bare root-level function imports (not associated with a
      * named interface) are not included.
@@ -128,7 +128,7 @@ public final class WasmtimeComponent implements AutoCloseable {
 
     /**
      * Returns the names of this component's top-level named interface
-     * exports (e.g. {@code "wasi:cli/run@0.2.6"}), read directly from the
+     * exports (e.g. {@code "my:custom/greet@1.0.0"}), read directly from the
      * compiled component via wasmtime. Bare root-level function exports (not
      * associated with a named interface) are not included.
      *
@@ -136,20 +136,6 @@ public final class WasmtimeComponent implements AutoCloseable {
      */
     public List<String> getExportInterfaces() {
         return toStringList(exportInterfaces(getComponentPtr()));
-    }
-
-    /**
-     * Returns whether this component exports {@code wasi:cli/run} -- the
-     * WASI Preview 2 convention for a component that can be run as a command
-     * (i.e. compiled from a {@code fn main()} program, as opposed to e.g. a
-     * {@code wasi:http/incoming-handler} service with no {@code run} entry
-     * point).
-     *
-     * @return {@code true} if this component exports an interface whose name
-     *         starts with {@code "wasi:cli/run@"}.
-     */
-    public boolean isCommand() {
-        return getExportInterfaces().stream().anyMatch(name -> name.startsWith("wasi:cli/run@"));
     }
 
     private static List<String> toStringList(Object[] values) {

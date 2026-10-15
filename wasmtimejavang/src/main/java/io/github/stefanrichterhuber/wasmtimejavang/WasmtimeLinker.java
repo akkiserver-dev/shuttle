@@ -12,7 +12,7 @@ import io.github.stefanrichterhuber.wasmtimejavang.WasmContext.Importmemory;
 
 /**
  * Used to resolve imports for a WebAssembly module.
- * The linker allows providing Java-implemented functions or WASI contexts
+ * The linker allows providing Java-implemented functions or host contexts
  * to a WASM module during instantiation.
  */
 public final class WasmtimeLinker implements AutoCloseable {
@@ -94,7 +94,7 @@ public final class WasmtimeLinker implements AutoCloseable {
     /**
      * Links all import functions from a collection of WasmContexts.
      * 
-     * @param contexts The collection of contexts providing imports (e.g., WASI
+     * @param contexts The collection of contexts providing imports (e.g., a host API
      *                 contexts).
      * @return This WasmtimeLinker for method chaining
      * @deprecated Use {@link #linkContexts(Iterable)} instead
@@ -107,7 +107,7 @@ public final class WasmtimeLinker implements AutoCloseable {
     /**
      * Links all import functions from a collection of WasmContexts.
      * 
-     * @param contexts The collection of contexts providing imports (e.g., WASI
+     * @param contexts The collection of contexts providing imports (e.g., a host API
      *                 contexts).
      * @return This WasmtimeLinker for method chaining
      */
@@ -121,7 +121,7 @@ public final class WasmtimeLinker implements AutoCloseable {
     /**
      * Links all import functions from a WasmContext.
      * 
-     * @param context The context providing imports (e.g., a WASI context).
+     * @param context The context providing imports (e.g., a host API context).
      * @return This WasmtimeLinker for method chaining
      * @deprecated Use {@link #linkContext(WasmContext)} instead
      */
@@ -133,7 +133,7 @@ public final class WasmtimeLinker implements AutoCloseable {
     /**
      * Links all import functions from a WasmContext.
      * 
-     * @param context The context providing imports (e.g., a WASI context).
+     * @param context The context providing imports (e.g., a host API context).
      * @return This WasmtimeLinker for method chaining
      */
     public WasmtimeLinker linkContext(WasmContext context) {
