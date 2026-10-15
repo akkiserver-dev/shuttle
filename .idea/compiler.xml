@@ -6,17 +6,17 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="wit-codegen-maven-plugin" />
-        <module name="wit-parser" />
-        <module name="wasmtimejavang" />
-        <module name="wasmtimejavang-example" />
+        <module name="shuttle-wit-maven-plugin" />
+        <module name="shuttle-wit-parser" />
+        <module name="shuttle-java" />
+        <module name="shuttle-java-example" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
-      <module name="wasmtimejavang" options="-h target/headers" />
-      <module name="wit-parser" options="-h target/headers" />
+      <module name="shuttle-java" options="-h target/headers" />
+      <module name="shuttle-wit-parser" options="-h target/headers" />
     </option>
   </component>
 </project>

@@ -483,7 +483,7 @@ Argument/return types follow the value bridge described above — here just `Str
 </plugin>
 ```
 
-This generates `com.example.generated.GreetContext` — an **interface**, not an abstract class (so a class can implement several generated interfaces at once — see "Combining interfaces" below), extending `WasmComponentContext` with `getImportFunctions()`/`getImportResources()`/`getProvidedInterfaces()`/`name()` already wired as `default` methods and one typed abstract method per WIT function (see [`WitCodeGenerator`](wit-codegen-maven-plugin/src/main/java/io/github/stefanrichterhuber/witcodegen/WitCodeGenerator.java) for the full WIT-to-Java type mapping). Implement it directly instead of hand-rolling `WasmComponentContext`:
+This generates `com.example.generated.GreetContext` — an **interface**, not an abstract class (so a class can implement several generated interfaces at once — see "Combining interfaces" below), extending `WasmComponentContext` with `getImportFunctions()`/`getImportResources()`/`getProvidedInterfaces()`/`name()` already wired as `default` methods and one typed abstract method per WIT function (see [`WitCodeGenerator`](wit-codegen-maven-plugin/src/main/java/jp/akkiserver/shuttle/wit/codegen/WitCodeGenerator.java) for the full WIT-to-Java type mapping). Implement it directly instead of hand-rolling `WasmComponentContext`:
 
 ```java
 public class MyGreetContext implements com.example.generated.GreetContext {
