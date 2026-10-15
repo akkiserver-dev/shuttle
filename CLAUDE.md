@@ -23,3 +23,36 @@
 ## Branches
 - New features: `feature/<name>`
 - Fixes: `fix/<name>`
+
+## Language
+- Talk to the user in Japanese.
+- Files in the repository (code, comments, docs, commit messages) are
+  written in English unless the user says otherwise.
+
+# Project
+
+Shuttle is a WebAssembly runtime library (Java binding + native Rust:
+Wasmtime + Weave) for Minecraft computer mods. It is not a mod itself.
+OpenComputers will use it through an addon; a new Retro Computing mod
+will include it by default. Current status and open decisions:
+`native/HANDOFF.md`. Overview and docs: `README.md`, `docs/`.
+
+| Path | What |
+| --- | --- |
+| `native/` | Rust workspace: `shuttle-core`, `shuttle-runner`, C test guests |
+| `shuttle-java/` | `jp.akkiserver.shuttle`: Wasmtime + Weave JNI binding |
+| `shuttle-java-example/` | Weave example |
+| `shuttle-wit-parser/`, `shuttle-wit-maven-plugin/` | WIT tooling |
+
+## Build and test (Windows)
+- Native core: `.\native\scripts\build.ps1` (needs LLVM for clang and
+  wasm-ld). Do not redirect its output; under Windows PowerShell 5.1 that
+  makes cargo's progress output abort the script.
+- Maven: there is no `mvn` on PATH. Use IntelliJ's bundled Maven,
+  `%LOCALAPPDATA%\Programs\IntelliJ IDEA\plugins\maven-plugin\lib\maven3\bin\mvn.cmd`,
+  with `JAVA_HOME=%USERPROFILE%\.jdks\temurin-25.0.4` (the global
+  `JAVA_HOME` points at `bin\` and is wrong), and the profile
+  `-P build-host-windows-x86_64`. The default profile uses cross + Docker.
+- JNI class names are also written as strings in Rust (`java_type = "..."`).
+  After renaming Java classes or packages, grep the `.rs` files and run the
+  tests: a wrong name compiles but fails at run time.
