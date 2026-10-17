@@ -1,7 +1,8 @@
 # Design: runtime extensions for the Weave binding
 
 Status: **design, not implemented** (2026-10-15). API names marked *(proposed)* need
-the owner's approval before implementation.
+the owner's approval before implementation; names marked *(approved)* were approved
+on 2026-10-17.
 
 ## Scope
 
@@ -35,6 +36,10 @@ already uses:
 | `0286544` yielding imports, per-instance memory limits | `TransformOptions::yielding_imports`, `weave_wasmtime::request_unwind`, `WeaveInstance::set_memory_limit`, `Ctx::set_memory_limit` |
 | `677cce6` change the limit from inside a host call | `Ctx::set_memory_limit` usable in host functions |
 
+The Weave-side names in the table are kept as they are (approved). `Cargo.toml` pins
+Weave by commit (`rev`), so the branch name `shuttle-host-hooks` does not matter to
+Shuttle and stays.
+
 Changes:
 
 - `wasmtime-binding/Cargo.toml`: all four Weave crates to rev
@@ -56,7 +61,7 @@ imports as unwind points. Inside such a host call,
 site. On `resume`, the guest calls the **same import again** with the same
 arguments, and that second call's return value is used.
 
-**Java API** *(proposed)*:
+**Java API** *(approved)*:
 
 ```java
 WeaveModule module = WeaveModule.load(engine, wasm,
@@ -77,7 +82,7 @@ builder.define("dev", "read", "ii>i", (caller, args) -> {
 });
 ```
 
-- `WeaveModule.Options` with `pollPeriod`, `stackPages`, `yieldingImport(module,
+- `WeaveModule.Options` (builder) with `pollPeriod`, `stackPages`, `yieldingImport(module,
   name)`. The existing `load(engine, wasm)` and `load(engine, wasm, pollPeriod,
   stackPages)` stay and map to it.
 - `WeaveCaller.suspend()` calls `request_unwind`. `call`/`resume` then return
@@ -96,14 +101,13 @@ builder.define("dev", "read", "ii>i", (caller, args) -> {
 
 Without a limit, a guest can grow its memory until the host runs out.
 
-**Java API** *(proposed)*:
+**Java API** *(approved)*:
 
 | Method | Maps to | Notes |
 | --- | --- | --- |
-| `WeaveInstance.setMemoryLimit(long bytes)` | `WeaveInstance::set_memory_limit(Some(n))` | |
-| `WeaveInstance.clearMemoryLimit()` | `set_memory_limit(None)` | |
+| `WeaveInstance.setMemoryLimit(long bytes)` | `WeaveInstance::set_memory_limit(Some(n))`, or `None` for a negative value | any negative value (conventionally `-1`) means unlimited; there is no separate `clear` method |
 | `WeaveInstance.memorySize()` | `mem_view().size(0)` | current size of memory 0, for accounting |
-| `WeaveCaller.setMemoryLimit(long bytes)` | `Ctx::set_memory_limit` | inside a host call, e.g. to shrink a parent's limit after creating a child |
+| `WeaveCaller.setMemoryLimit(long bytes)` | `Ctx::set_memory_limit` (same rule) | inside a host call, e.g. to shrink a parent's limit after creating a child |
 
 - A `memory.grow` past the limit returns -1 to the guest; it does not trap.
 - The limit is not part of a Weave snapshot. After `restore`, the host sets it again.
@@ -120,23 +124,23 @@ call (`native/crates/shuttle-core/src/imports.rs`, `instantiate_child` and
    stays valid) and a test has to cover it.
 2. **Shared execution budget.** The child's polls come out of the parent's
    remaining budget. The host needs:
-   - `WeaveCaller.remainingPolls()` / `WeaveCaller.setRemainingPolls(long)`
-     *(proposed)*: the parent's `Poller::UnwindAfter(n)`, read and written inside the
-     host call.
-   - `WeaveInstance.remainingPolls()` *(proposed)*: after `resume`, the child's
-     leftover budget (`take_poller`), so the host can compute how many polls it used.
+   - `WeaveCaller.pollBudget()` / `WeaveCaller.setPollBudget(long)` *(approved)*: the
+     parent's `Poller::UnwindAfter(n)`, read and written inside the host call.
+   - `WeaveInstance.pollBudget()` *(approved)*: after `resume`, the child's leftover
+     budget (`take_poller`), so the host can compute how many polls it used.
+   - The existing `unwindAfter(n)` keeps its name.
 
    The host gives the child `min(requested, parent remaining)` with
    `unwindAfter(...)`, resumes it, and subtracts the polls the child used from the
    parent:
 
    ```java
-   long remaining = caller.remainingPolls();
+   long remaining = caller.pollBudget();
    long given = Math.min(requested, remaining);
    child.unwindAfter(given);
    WeaveResult r = child.resume();
-   long used = given - child.remainingPolls();
-   caller.setRemainingPolls(remaining - used);
+   long used = given - child.pollBudget();
+   caller.setPollBudget(remaining - used);
    ```
 
 3. **Snapshots** stay per instance: `snapshot()` on the parent and on each child, plus
