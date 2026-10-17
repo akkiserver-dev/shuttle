@@ -7,24 +7,27 @@ files in the repo stay in English.
 
 ## 1. What the project is
 
-Shuttle is a **WebAssembly runtime library** (Java binding + native Rust)
-for Minecraft computer mods. It is **not a mod itself**. Planned consumers:
+**Scope (owner, 2026-10-15): Shuttle only provides a Weave-integrated,
+persistable Wasmtime runtime and its Java binding**, the way JNLua provides
+the Lua runtime for OpenComputers. It is **not a mod**. Planned consumers:
 
 - **OpenComputers (OC)**, through a separate addon mod.
 - **A new Retro Computing mod (RC)** by the owner, which includes Shuttle
   by default.
 
-Neither integration exists yet. Everything a computer runs is Wasm: a BIOS
-(player-made, e.g. stored on an EEPROM item), an OS kernel, and the OS's
-child programs.
+Neither integration exists yet. Everything at the level of "a computer"
+belongs to the host mod: firmware and its ABI, devices, ticks, power,
+BIOS -> OS -> child programs, the save format of a whole machine.
 
 - Runtime: **Wasmtime**, made checkpointable with **Weave** (a Wasm
   transformer that can unwind a running program into its linear memory and
-  rebuild it later). This is how a host mod saves a computer with the world
-  and resumes it mid-execution after a reload.
-- Layers: firmware (implemented by Shuttle) -> BIOS -> OS -> child programs.
-  The firmware talks to guests only through the firmware ABI, never through
-  Wasmtime APIs.
+  rebuild it later). This is how a host mod saves running guests with the
+  world and resumes them after a reload.
+- Kept in Shuttle as generic runtime features (designed, not implemented):
+  Weave extensions (yielding imports, `request_unwind`, memory limits) and
+  the primitives for nested instances. See `docs/design/runtime-extensions.md`.
+- `native/` (`shuttle-core`, `shuttle-runner`, C guests, firmware ABI) is a
+  prototype of the RC side and will move to the RC repository.
 - Native code: Rust (Wasmtime + Weave + JNI). Java side: `shuttle-java`.
 - Targets: Windows, macOS, Linux, each x86_64 and arm64.
 
@@ -33,10 +36,11 @@ child programs.
 | What | Where |
 | --- | --- |
 | This repo | `akkiserver-dev/shuttle` (forked from StefanRichterHuber/wasmtime-ng) |
-| Working branch | `feature/unified-ci` (from `main` after PR #2 was merged as `7109d4f`) |
-| PRs | #1 closed (CI check only); #2 merged (native core, rename, docs, CI fixes) |
+| Working branch | `feature/runtime-extensions-design` (from `main` at `99956f1`, after PR #3 was merged) |
+| PRs | #1 closed (CI check only); #2 merged (native core, rename, docs, CI fixes); #3 merged (unified CI, host profiles) |
 | Weave fork | `akkiserver-dev/weave`, branch `shuttle-host-hooks` (commit `677cce6`) |
-| Firmware ABI spec (Japanese) | https://claude.ai/code/artifact/05272d17-ac4c-4f56-933a-374281672f79 |
+| RC firmware ABI spec (Japanese) | https://claude.ai/code/artifact/05272d17-ac4c-4f56-933a-374281672f79 |
+| RC Java-side device layer spec (Japanese) | https://claude.ai/code/artifact/f10cc73d-71d3-4ac4-8508-891479a7b215 |
 | Docs | `README.md` (overview), `docs/` (building, java-binding, wit-codegen), `native/README.md` |
 
 Modules (Maven groupId `jp.akkiserver`, parent artifactId `shuttle`):
@@ -52,7 +56,7 @@ Modules (Maven groupId `jp.akkiserver`, parent artifactId `shuttle`):
 Old names (before commit `983dc25`): `wasmtimejavang`, `wasmtimejavang-example`,
 `wit-parser`, `wit-codegen-maven-plugin`, groupId `io.github.stefanrichterhuber`,
 packages `io.github.stefanrichterhuber.{wasmtimejavang,witparser,witcodegen}`.
-Remote branches `feature/native-build` and `feature/shuttle-core` are merged/obsolete (not deleted yet).
+Remote branches `feature/native-build`, `feature/unified-ci` and `feature/shuttle-core` are merged/obsolete (not deleted yet).
 
 ## 3. Current state (2026-10-15)
 
@@ -70,9 +74,15 @@ Remote branches `feature/native-build` and `feature/shuttle-core` are merged/obs
   Snapshots 5.3 KB (tick 1) and about 7.6 KB later, matching the Linux numbers
   in `native/README.md`; so the larger Windows snapshots (about 9.3 KB) are an
   OS difference, cause not investigated.
-- **WSL2 Maven not run yet**: needs `sudo apt install openjdk-21-jdk maven`
-  and `rustup target add wasm32-unknown-unknown`. The owner's bar for "done"
-  is build + tests passing on the Windows host and on WSL2.
+- **WSL2 Maven verified**: `mvn test` in `/mnt/d/Projects/shuttle` (no `-P`;
+  `host-linux-x86-64` activates itself) passes for all five modules
+  (4m07s). Needs `openjdk-21-jdk`, `maven` and the `wasm32-unknown-unknown`
+  Rust target. The owner's bar for "done" (build + tests on the Windows host
+  and on WSL2) is met.
+- **CI (`ci.yml`, PR #3)**: all 13 jobs pass. One earlier `java
+  (macos-aarch64)` failure was transient: Maven could not download
+  `maven-filtering:3.4.0` from Central; a re-run passed. Further CI work is
+  on hold by the owner's decision.
 - **Maven on Windows** (IntelliJ's bundled Maven, JDK 25, no `-P`; the
   `host-windows-x86-64` profile activates itself), `RUSTFLAGS=-D warnings`:
   all five modules pass: `shuttle-java` 64/64, `shuttle-wit-parser` 4/4,
@@ -84,18 +94,34 @@ Remote branches `feature/native-build` and `feature/shuttle-core` are merged/obs
   replaced by six OS-activated `host-*` profiles in the root pom, also used by
   `shuttle-wit-parser`.
 - **Two Weave versions coexist**: `shuttle-java` pins `0f26893` (no
-  `shuttle-host-hooks`), `native/` pins `677cce6`. How the `d400a75` Weave
-  JNI layer and `native/shuttle-core` fit together is **not decided**.
+  `shuttle-host-hooks`), `native/` pins `677cce6`. Decided: they are not
+  connected; `shuttle-java` moves to `677cce6` as part of the
+  runtime-extensions design, and `native/` moves to the RC side.
 
 ## 4. Decided with the owner
 
-- Rust/Java boundary: Weave, `co_*`, VM exits, memory pool and snapshot
-  capture live in Rust. Device implementations live in Java and are called
-  directly from Rust (JNI) on worker threads; world-touching work is queued
-  to the server thread. Host mod code sees a high-level Machine API only.
-- Threads: Rust owns a worker pool (reliable stack sizes for
-  `max_wasm_stack`). Saving is split: capture on the worker at a tick
-  boundary, compress and write on a separate save thread.
+The first group was decided while Shuttle was still thought to include the
+machine. Under the clarified scope (section 1) it belongs to the RC mod and
+is kept here for reference until `native/` moves.
+
+### 4a. Machine level (belongs to the RC mod)
+
+- Firmware language (2026-10-15, replaces the earlier Rust/Java boundary):
+  the whole firmware (`fw.*`, `co.*`, the machine, devices, the save format)
+  is written in Java in the RC mod, as in OpenComputers. It is built on
+  Shuttle's host functions, yielding imports, memory limits and
+  nested-instance primitives (`docs/design/runtime-extensions.md`).
+  `native/shuttle-core` (Rust) followed the earlier plan, where `co_*`, VM
+  exits, the memory pool and snapshot capture lived in Rust; it is now only
+  a reference for the Java rewrite.
+- Threads (2026-10-17, replaces "Rust owns a worker pool"): Shuttle creates
+  no threads. The host (RC, Java) owns the worker pool and creates its
+  threads with an explicit stack size
+  (`new Thread(group, task, name, stackSize)`), with `max_wasm_stack` set
+  below that stack size. Virtual threads are not used for guests. Device
+  calls that touch the world are queued to the server thread. Saving is
+  split: capture at a tick boundary, compress and write on a separate save
+  thread.
 - Persistence: NBT/DataComponents hold only a UUID and small metadata; the
   snapshot and file systems are separate files in the world folder.
 - ABI shape (see the spec): balanced realism. Kept: `cpuid` strings, slots
@@ -106,6 +132,17 @@ Remote branches `feature/native-build` and `feature/shuttle-core` are merged/obs
   other CPU properties come from parts. Feature flags map to Wasm features.
 - Runtimes are switchable through an OC-style Architecture abstraction. Lua
   comes later (Wasm-hosted Lua preferred; JNLua as a compatibility option).
+
+### 4b. Shuttle (runtime and repository)
+
+- Scope (2026-10-15): Shuttle = Weave-integrated persistable Wasmtime runtime
+  + Java binding only. Kept as runtime features: Weave extensions (yielding
+  imports, `request_unwind`, memory limits) and nested-instance primitives;
+  design in `docs/design/runtime-extensions.md` (API names there still need
+  approval). `native/` moves to the RC side.
+- Threads (2026-10-17): Shuttle creates no threads. Guests and host
+  functions run on the Java thread that calls `call`/`resume`; the host mod
+  owns the threads and their stack sizes.
 - Build: option C. Local scripts for Windows and WSL2 build the host target;
   release binaries for all six platforms come from CI.
 - Weave may be modified freely.
@@ -131,6 +168,9 @@ Remote branches `feature/native-build` and `feature/shuttle-core` are merged/obs
   task (distribution format not decided).
 
 ## 5. NOT approved yet (decided by Claude without asking; review each)
+
+Item 3 concerns Shuttle (Weave API names). Items 1, 2, 4 and 5 concern the
+machine prototype in `native/` and go to the RC side with it.
 
 1. `dev_call` result that does not fit `rcap`: held in one slot and fetched
    with `dev_result(-1, ...)`; replaced by the next `dev_call`.
@@ -167,11 +207,14 @@ Remote branches `feature/native-build` and `feature/shuttle-core` are merged/obs
 
 The owner picks the order. Candidates:
 
-1. Finish `feature/unified-ci` (CI green on all six platforms, PR, merge).
-2. WSL2 native build (after the owner installs the tools).
-3. Decide how the Weave JNI layer (`shuttle-java`, Weave `0f26893`) and
-   `native/shuttle-core` (`677cce6`) relate, then design the Machine API JNI
-   layer. Review section 5 as part of it.
-4. All-platform jar / distribution (Maven Central, GitHub Releases, bundled
-   in the RC mod, ...).
-5. Smaller known issues from section 6.
+1. Implement `docs/design/runtime-extensions.md` after the owner approves its
+   API names (and section 5 item 3): Weave bump to `677cce6`, yielding
+   imports, memory limits, nested-instance primitives, tests.
+2. Move `native/` to the RC repository (when that repository exists).
+3. All-platform jar / distribution (Maven Central, GitHub Releases, bundled
+   in the RC mod, ...). CI work is on hold until the owner asks.
+4. Smaller known issues from section 6.
+
+Done on 2026-10-15: Windows and WSL2 builds + tests, rename to Shuttle,
+docs, Java CI fix (PR #2), unified build-only CI and host profiles (PR #3),
+scope clarified to runtime-only and the runtime-extensions design.

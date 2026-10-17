@@ -1,9 +1,9 @@
 # Shuttle (prototype)
 
-Native core of Shuttle, the Wasm runtime library for computer mods: runs Wasm guests (BIOS → OS kernel →
+A prototype of a whole computer, built on Wasmtime + Weave: runs Wasm guests (BIOS → OS kernel →
 child programs) on Wasmtime 46, makes them checkpointable with Weave, and
 implements the firmware ABI draft 0.1 (`fw.*`, `co.*`, `sys.call`).
-Nothing here depends on Minecraft or Java yet.
+Nothing here depends on Minecraft or Java yet. This level (firmware, devices, the machine) belongs to the host mod, not to the Shuttle runtime: this directory will move to the Retro Computing mod and is kept here as a reference.
 
 ## Layout
 

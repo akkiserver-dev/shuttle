@@ -2,52 +2,31 @@
 
 # Shuttle
 
-> **Status:** early prototype. The native core runs headless only; no mod uses Shuttle yet.
+> **Status:** early prototype. No mod uses Shuttle yet.
 
-Shuttle is a WebAssembly runtime library for Minecraft computer mods. It is not a mod itself: computer mods use it to run the programs on their in-game computers. Two consumers are planned: OpenComputers (OC), through a separate addon mod, and a new Retro Computing mod, which will include Shuttle by default. Neither integration exists yet.
+Shuttle is a persistable WebAssembly runtime for Java: [Wasmtime](https://github.com/bytecodealliance/wasmtime) integrated with [Weave](https://github.com/akkiserver-dev/weave), plus its Java binding. It plays the role for Wasm that JNLua plays for Lua in OpenComputers: it runs guest code and can save it mid-execution, and nothing more. It is not a mod itself.
 
-On behalf of the host mod, Shuttle runs a stack of Wasm guests:
-
-```
-firmware          implemented by Shuttle's native core
-  └─ BIOS            player-made Wasm (for example stored on an EEPROM item)
-       └─ OS kernel  player-made Wasm, started by the BIOS with `exec`
-            └─ child programs  started by the kernel with `co_create`
-```
-
-The firmware talks to guests only through the **firmware ABI** (`fw.*`, `co.*`, `sys.call`). Device calls look like OpenComputers method calls, either synchronous (`dev_call`) or asynchronous (`dev_submit` + a completion event). The ABI is specified in a separate draft document (draft 0.1, not published in this repository); [`native/README.md`](native/README.md) lists which parts of it are implemented.
+Computer mods build on it. Two consumers are planned: OpenComputers (OC), through a separate addon mod, and a new Retro Computing mod (RC), which will include Shuttle by default. Everything at the level of "a computer" (firmware, BIOS/OS boot, devices, ticks, the save format of a whole machine) belongs to those mods, not to Shuttle.
 
 ## How it works
 
-- **Runtime:** [Wasmtime](https://github.com/bytecodealliance/wasmtime), made checkpointable with [Weave](https://github.com/akkiserver-dev/weave) (branch `shuttle-host-hooks`). Weave transforms a Wasm module so that a running program can be unwound into its linear memory and rebuilt later. This lets a host mod save a computer with the world and continue it mid-execution after a reload.
-- **Native core (Rust, `native/`):** Wasmtime, Weave, the firmware ABI, the `co_*` machinery, memory limits and snapshot capture. Today it is driven by the headless `shuttle-runner`.
-- **Java binding (`shuttle-java`):** Java API over Wasmtime and Weave through JNI, for the host mod to call. A high-level Machine API on top of the native core is planned but not written yet.
+- **Persistence:** Weave transforms a Wasm module so that a running program can be unwound into its linear memory and rebuilt later. A host mod can therefore save a running guest with the world and continue it after a reload.
+- **Java binding (`shuttle-java`):** Wasmtime and Weave through JNI: load a module, run it for a bounded number of polls, define host functions, take and restore snapshots. Planned extensions (yielding imports, memory limits, nested instances) are described in [docs/design/runtime-extensions.md](docs/design/runtime-extensions.md).
 - **Targets:** Windows, macOS and Linux, each on x86_64 and arm64.
 
 ## Repository layout
 
 | Path | What |
 | --- | --- |
-| [`native/`](native) | Shuttle native core (Rust): `shuttle-core`, the headless `shuttle-runner`, and C test guests in `native/guests`. See [`native/README.md`](native/README.md). |
 | [`shuttle-java/`](shuttle-java) | Java bindings for Wasmtime plus the Weave (checkpointable Wasm) JNI layer. See [docs/java-binding.md](docs/java-binding.md). |
 | [`shuttle-java-example/`](shuttle-java-example) | Runnable Weave example: run a guest a few "ticks" at a time, snapshot it, restore it and continue. |
 | [`shuttle-wit-parser/`](shuttle-wit-parser), [`shuttle-wit-maven-plugin/`](shuttle-wit-maven-plugin) | Build-time WIT tooling: generate Java component-context interfaces from WIT files. See [docs/wit-codegen.md](docs/wit-codegen.md). |
+| [`native/`](native) | A prototype of a whole computer (firmware ABI, BIOS → OS → child programs) on Wasmtime + Weave, in Rust. It belongs to the RC mod and will move there; it is kept here for now as a reference. See [`native/README.md`](native/README.md). |
 | [`docs/`](docs) | Documentation. Start at [docs/README.md](docs/README.md). |
 
 The Java modules form one Maven reactor: groupId `jp.akkiserver`, parent artifactId `shuttle`, one artifact per directory (`shuttle-java`, `shuttle-java-example`, `shuttle-wit-parser`, `shuttle-wit-maven-plugin`). The version is set in the root [`pom.xml`](pom.xml).
 
 ## Quick start
-
-Native core (requires Rust, plus clang and wasm-ld for the C guests):
-
-```powershell
-.\native\scripts\build.ps1          # Windows: build guests + workspace, then verify
-```
-```sh
-./native/scripts/build.sh           # Linux / WSL2
-```
-
-`verify` boots BIOS → OS → child, then repeats the run with capture → restore into a fresh machine at every tick boundary and checks that the logs are identical.
 
 Java bindings (requires JDK 21, Maven and Rust; Maven picks the native build for your OS and CPU automatically):
 
@@ -58,12 +37,24 @@ mvn -pl shuttle-java-example exec:java
 
 The second command runs the Weave example. Platform profiles, CI and known problems are covered in [docs/building.md](docs/building.md).
 
+The `native/` prototype (requires Rust, plus clang and wasm-ld for the C guests):
+
+```powershell
+.\native\scripts\build.ps1          # Windows: build guests + workspace, then verify
+```
+```sh
+./native/scripts/build.sh           # Linux / WSL2
+```
+
+`verify` boots BIOS → OS → child, then repeats the run with capture → restore into a fresh machine at every tick boundary and checks that the logs are identical.
+
 ## Documentation
 
-- [docs/building.md](docs/building.md): building the native core and the Maven modules, CI, requirements, known issues
+- [docs/building.md](docs/building.md): building the Maven modules and the native/ prototype, CI, requirements, known issues
 - [docs/java-binding.md](docs/java-binding.md): the `shuttle-java` API (Wasmtime and Weave) and its architecture
+- [docs/design/runtime-extensions.md](docs/design/runtime-extensions.md): planned runtime extensions (design)
 - [docs/wit-codegen.md](docs/wit-codegen.md): generating Java component contexts from WIT
-- [native/README.md](native/README.md): the native core prototype, its results and its ABI coverage
+- [native/README.md](native/README.md): the computer prototype (moving to the RC mod), its results and its ABI coverage
 
 ## Credits and license
 
