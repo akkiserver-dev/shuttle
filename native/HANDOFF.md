@@ -36,10 +36,11 @@ BIOS -> OS -> child programs, the save format of a whole machine.
 | What | Where |
 | --- | --- |
 | This repo | `akkiserver-dev/shuttle` (forked from StefanRichterHuber/wasmtime-ng) |
-| Working branch | `feature/unified-ci` (from `main` after PR #2 was merged as `7109d4f`) |
-| PRs | #1 closed (CI check only); #2 merged (native core, rename, docs, CI fixes) |
+| Working branch | `feature/runtime-extensions-design` (from `main` at `99956f1`, after PR #3 was merged) |
+| PRs | #1 closed (CI check only); #2 merged (native core, rename, docs, CI fixes); #3 merged (unified CI, host profiles) |
 | Weave fork | `akkiserver-dev/weave`, branch `shuttle-host-hooks` (commit `677cce6`) |
-| Firmware ABI spec (Japanese) | https://claude.ai/code/artifact/05272d17-ac4c-4f56-933a-374281672f79 |
+| RC firmware ABI spec (Japanese) | https://claude.ai/code/artifact/05272d17-ac4c-4f56-933a-374281672f79 |
+| RC Java-side device layer spec (Japanese) | https://claude.ai/code/artifact/f10cc73d-71d3-4ac4-8508-891479a7b215 |
 | Docs | `README.md` (overview), `docs/` (building, java-binding, wit-codegen), `native/README.md` |
 
 Modules (Maven groupId `jp.akkiserver`, parent artifactId `shuttle`):
@@ -55,7 +56,7 @@ Modules (Maven groupId `jp.akkiserver`, parent artifactId `shuttle`):
 Old names (before commit `983dc25`): `wasmtimejavang`, `wasmtimejavang-example`,
 `wit-parser`, `wit-codegen-maven-plugin`, groupId `io.github.stefanrichterhuber`,
 packages `io.github.stefanrichterhuber.{wasmtimejavang,witparser,witcodegen}`.
-Remote branches `feature/native-build` and `feature/shuttle-core` are merged/obsolete (not deleted yet).
+Remote branches `feature/native-build`, `feature/unified-ci` and `feature/shuttle-core` are merged/obsolete (not deleted yet).
 
 ## 3. Current state (2026-10-15)
 
@@ -105,13 +106,22 @@ is kept here for reference until `native/` moves.
 
 ### 4a. Machine level (belongs to the RC mod)
 
-- Rust/Java boundary: Weave, `co_*`, VM exits, memory pool and snapshot
-  capture live in Rust. Device implementations live in Java and are called
-  directly from Rust (JNI) on worker threads; world-touching work is queued
-  to the server thread. Host mod code sees a high-level Machine API only.
-- Threads: Rust owns a worker pool (reliable stack sizes for
-  `max_wasm_stack`). Saving is split: capture on the worker at a tick
-  boundary, compress and write on a separate save thread.
+- Firmware language (2026-10-15, replaces the earlier Rust/Java boundary):
+  the whole firmware (`fw.*`, `co.*`, the machine, devices, the save format)
+  is written in Java in the RC mod, as in OpenComputers. It is built on
+  Shuttle's host functions, yielding imports, memory limits and
+  nested-instance primitives (`docs/design/runtime-extensions.md`).
+  `native/shuttle-core` (Rust) followed the earlier plan, where `co_*`, VM
+  exits, the memory pool and snapshot capture lived in Rust; it is now only
+  a reference for the Java rewrite.
+- Threads (2026-10-17, replaces "Rust owns a worker pool"): Shuttle creates
+  no threads. The host (RC, Java) owns the worker pool and creates its
+  threads with an explicit stack size
+  (`new Thread(group, task, name, stackSize)`), with `max_wasm_stack` set
+  below that stack size. Virtual threads are not used for guests. Device
+  calls that touch the world are queued to the server thread. Saving is
+  split: capture at a tick boundary, compress and write on a separate save
+  thread.
 - Persistence: NBT/DataComponents hold only a UUID and small metadata; the
   snapshot and file systems are separate files in the world folder.
 - ABI shape (see the spec): balanced realism. Kept: `cpuid` strings, slots
@@ -130,6 +140,9 @@ is kept here for reference until `native/` moves.
   imports, `request_unwind`, memory limits) and nested-instance primitives;
   design in `docs/design/runtime-extensions.md` (API names there still need
   approval). `native/` moves to the RC side.
+- Threads (2026-10-17): Shuttle creates no threads. Guests and host
+  functions run on the Java thread that calls `call`/`resume`; the host mod
+  owns the threads and their stack sizes.
 - Build: option C. Local scripts for Windows and WSL2 build the host target;
   release binaries for all six platforms come from CI.
 - Weave may be modified freely.
